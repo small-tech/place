@@ -1,0 +1,168 @@
+#!/bin/bash
+
+######################################################################
+#
+# ⛺
+#
+# Installer for Linux (x86 and ARM) and macOS.
+#
+# Usage:
+#
+# wget -qO- https://place.small-web.org/install | bash
+#
+# Or:
+#
+# curl -s https://place.small-web.org/install | bash
+#
+# For alpha, replace bash with bash -s -- alpha
+# For beta, replace bash with bash -s -- beta
+#
+# Copyright (c) 2019-2020 Aral Balkan.
+# Released under the AGPL version 3.0 or later license.
+# Made with ♥ by Small Technology Foundation (https://small-tech.org)
+#
+# Like this? Fund us! (https://small-tech.org/fund-us)
+#
+######################################################################
+
+# Use either wget or curl to download the Place binary,
+# whichever exists on the system (favour wget).
+which wget > /dev/null
+if [ $? -eq 0 ]
+then
+  # wget exists, we’ll use that.
+  download="wget -q"
+else
+  which curl > /dev/null
+  if [ $? -eq 0 ]
+  then
+    # curl exists, we’ll use that.
+    download="curl -Os"
+  else
+    echo
+    echo " ❌ The installation script needs either wget or curl installed to continue."
+    echo
+    exit 1
+  fi
+fi
+
+set -e
+
+function cleanUp {
+  popd > /dev/null
+  rm -rf /tmp/place.small-web.org
+}
+
+releaseChannel=$1
+
+# Release is the default release type (others are alpha and beta).
+if [[ "$releaseChannel" == "" ]]; then
+  releaseChannel='release'
+fi
+
+alphaBinaryVersion=20200823174121
+alphaPackageVersion=14.3.0
+alphaSourceVersion=90f059c
+
+betaBinaryVersion=20200710135219
+betaPackageVersion=14.1.1
+betaSourceVersion=afde7bd
+
+releaseBinaryVersion=20201107145233
+releasePackageVersion=16.0.1
+releaseSourceVersion=891b972
+
+binaryVersionVariableName="${releaseChannel}BinaryVersion"
+packageVersionVariableName="${releaseChannel}PackageVersion"
+sourceVersionVariableName="${releaseChannel}SourceVersion"
+
+binaryVersion=${!binaryVersionVariableName}
+packageVersion=${!packageVersionVariableName}
+sourceVersion=${!sourceVersionVariableName}
+
+if [[ "$binaryVersion" == "00000000000000" ]]; then
+  echo " ❌ Sorry, no Place ${releaseChannel} binaries have been released yet."
+  cleanUp
+  exit 1
+fi
+
+echo
+echo " 📡 Downloading Place version ${binaryVersion} (${packageVersion}/${sourceVersion})…"
+
+# Mark alpha and beta releases prominently.
+if [[ "$releaseChannel" == "alpha" ]]; then
+
+  # Writes ALPHA in large red block letters.
+  echo -e '\033[31m'
+  echo '     █████  ██      ██████  ██   ██  █████'
+  echo '    ██   ██ ██      ██   ██ ██   ██ ██   ██ '
+  echo '    ███████ ██      ██████  ███████ ███████ '
+  echo '    ██   ██ ██      ██      ██   ██ ██   ██ '
+  echo '    ██   ██ ███████ ██      ██   ██ ██   ██'
+  echo -e '\033[0m'
+
+elif [[ "$releaseChannel" == "beta" ]]; then
+
+  # Writes BETA in large yellow block letters.
+  echo -e '\033[33m'
+  echo '    ██████  ███████ ████████  █████ '
+  echo '    ██   ██ ██         ██    ██   ██ '
+  echo '    ██████  █████      ██    ███████ '
+  echo '    ██   ██ ██         ██    ██   ██ '
+  echo '    ██████  ███████    ██    ██   ██'
+  echo -e '\033[0m'
+
+fi
+
+# Setup.
+rm -rf /tmp/place.small-web.org
+mkdir -p /tmp/place.small-web.org
+pushd /tmp/place.small-web.org > /dev/null
+
+# Download the release.
+if [[ "$OSTYPE" == "linux-gnu" || "$OSTYPE" == "linux-gnueabihf" ]]; then
+  cpuArchitecture=`uname -m`
+  if [[ "$cpuArchitecture" == "x86_64" ]]; then
+    # Linux on x64.
+    $download "https://place.small-web.org/binaries/${releaseChannel}/linux/${binaryVersion}.tar.gz"
+  elif [[ "$cpuArchitecture" == "armv7l" || "$cpuArchitecture" == "armv6l" ]]; then
+    # Linux on ARM. Tested on Raspberry Pi Zero W (armv6l), 3B+ and 4B (both reporting armv7l).
+    $download "https://place.small-web.org/binaries/${releaseChannel}/linux-arm/${binaryVersion}.tar.gz"
+  elif [[ "$cpuArchitecture" == "aarch64" ]]; then
+    # Linux on ARM64. Tested with Pinebook Pro.
+    $download "https://place.small-web.org/binaries/${releaseChannel}/linux-arm64/${binaryVersion}.tar.gz"
+  else
+    # Error: unsupported architecture.
+    echo
+    echo " ❌ Error: this architecture is not supported on Linux (only x86_64, armv6l, and armv7l are)."
+    echo
+    cleanUp
+    exit 1
+  fi
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+  # macOS
+  $download "https://place.small-web.org/binaries/${releaseChannel}/macos/${binaryVersion}.tar.gz"
+else
+  # Error: Unsupported operating system.
+  echo
+  echo " ❌ Error: this operating system is not supported."
+  echo
+  cleanUp
+  exit 1
+fi
+
+# Install.
+echo " 📦 Installing…"
+gzip -d "${binaryVersion}.tar.gz"
+tar -xf "${binaryVersion}.tar"
+
+# Ensure /usr/local/bin directory exists (it does not by default on macOS)
+sudo mkdir -p /usr/local/bin/
+
+# Install the Place binary.
+sudo mv place /usr/local/bin/
+
+cleanUp
+
+echo " 🎉 Done!"
+echo
