@@ -1,6 +1,6 @@
 # ⛺ Place
 
-## A Small Web Construction Set.
+## A tool for building your own Small Web place.
 
 Place is a hard fork of [Site.js](https://sitejs.org).
 
