@@ -335,6 +335,13 @@ class Place {
     // Express.js security with HTTP headers.
     this.app.use(helmet())
 
+    // Allow cross-origin requests. Wouldn’t be much of a peer-to-peer web without them ;)
+    this.app.use((req, res, next) => {
+      res.header('Access-Control-Allow-Origin', '*')
+      res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
+      next()
+    })
+
     // Statistics middleware (captures anonymous, ephemeral statistics).
     this.app.use(this.stats.middleware)
 
