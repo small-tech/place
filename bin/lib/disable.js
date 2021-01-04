@@ -24,8 +24,6 @@ function disable () {
 
   const { isActive, isEnabled } = status()
 
-  console.log('.....', isEnabled)
-
   if (!isEnabled) {
     throwError('Place daemon is not enabled. Nothing to disable.')
   }
