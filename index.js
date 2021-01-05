@@ -164,7 +164,15 @@ class Place {
             chalk.hsl(329,100,70)(`${prefix}██████  ██      ███████ ██      █████  `) + midGreen('     ██') + darkGreen('███') + midGreen('██') + lightGreen('██████\n'),
             chalk.hsl(329,100,60)(`${prefix}██      ██      ██   ██ ██      ██     `) + midGreen('    ██') + darkGreen('█████') + midGreen('██') + lightGreen('██████\n'),
             chalk.hsl(329,100,50)(`${prefix}██      ███████ ██   ██  ██████ ███████`) + midGreen('   ██') + darkGreen('███████') + midGreen('██') + lightGreen('██████\n'),
-            '\n'
+            '\n',
+            chalk.red('  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n'),
+            chalk.red('  ┃                            WARNING                           ┃\n'),
+            chalk.red('  ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫\n'),
+            chalk.red('  ┃ Place is pre-release and rapidly evolving. Things may be un- ┃\n'),
+            chalk.red('  ┃ implemented, incomplete or broken. Please feel free to play  ┃\n'),
+            chalk.red('  ┃ but we’re not currently looking for contributions or issues. ┃\n'),
+            chalk.red('  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n'),
+            '\n',
           ]
     }
   }
@@ -189,7 +197,7 @@ class Place {
     }
 
     if (!Place.#appNameAndVersionAlreadyLogged && !process.argv.includes('--dont-log-app-name-and-version')) {
-      let prefix1 = ''
+      let prefix1 = '  '
       let prefix2 = '    '
 
       this.readAndCacheManifest()
@@ -204,12 +212,13 @@ class Place {
         '\n',
         `${prefix2}Base    ${clr(`https://place.small-web.org/nexe/${process.platform}-${process.arch}-${process.version.replace('v', '')}`, 'cyan')}\n`,
         `${prefix2}Source  ${clr(`https://source.small-tech.org/place/app/-/tree/${this.sourceVersion}`, 'cyan')}\n\n`,
-        `${prefix2}╔═══════════════════════════════════════════╗\n`,
-        `${prefix2}║ Like this? Fund us!                       ║\n`,
-        `${prefix2}║                                           ║\n`,
-        `${prefix2}║ We’re a tiny, independent not-for-profit. ║\n`,
-        `${prefix2}║ https://small-tech.org/fund-us            ║\n`,
-        `${prefix2}╚═══════════════════════════════════════════╝\n`,
+
+        `${prefix1}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n`,
+        `${prefix1}┃                      Like this? Fund Us!                     ┃\n`,
+        `${prefix1}┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫\n`,
+        `${prefix1}┃ We’re a tiny, independent not-for-profit.                    ┃\n`,
+        `${prefix1}┃ https://small-tech.org/fund-us                               ┃\n`,
+        `${prefix1}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n`,
       ])
 
       message = message.join('')

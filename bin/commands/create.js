@@ -66,10 +66,10 @@ async function create (args) {
   do {
     passphrase = generateEFFDicewarePassphrase.entropy(100).join (' ')
 
-    const line = '═'.repeat(passphrase.length+2)
-    console.log(`\n    ╔${line}╗`,)
-    console.log(`    ║ ${passphrase} ║`,)
-    console.log(`    ╚${line}╝\n`,)
+    const line = '━'.repeat(passphrase.length+2)
+    console.log(`\n  ┏${line}┓`,)
+    console.log(`  ┃ ${passphrase} ┃`,)
+    console.log(`  ┗${line}┛\n`,)
 
     passphraseConfirmation = await inquirer
     .prompt([
