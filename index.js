@@ -127,7 +127,7 @@ class Place {
     return this.binaryVersionToHumanReadableDateString(this.#manifest.binaryVersion)
   }
 
-  static releaseChannelFormattedForConsole (prefix = '         ') {
+  static releaseChannelFormattedForConsole (prefix = ' ') {
 
     switch(this.releaseChannel) {
 
@@ -185,8 +185,8 @@ class Place {
     }
 
     if (!Place.#appNameAndVersionAlreadyLogged && !process.argv.includes('--dont-log-app-name-and-version')) {
-      let prefix1 = compact ? ' ⛺ ' : '   ⛺    '
-      let prefix2 = compact ? '    ' : '         '
+      let prefix1 = '    '
+      let prefix2 = '    '
 
       this.readAndCacheManifest()
 

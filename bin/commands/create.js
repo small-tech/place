@@ -13,6 +13,7 @@
 
 const Place = require('../../index')
 const inquirer = require('inquirer')
+const ora = require('ora')
 const generateEFFDicewarePassphrase = require('eff-diceware-passphrase')
 
 async function create (args) {
@@ -22,16 +23,29 @@ async function create (args) {
   let passphrase
   let passphraseConfirmation
 
-  console.log('Please save your randomly-generated strong passphrase somewhere safe (e.g., 1password, etc.):')
+  console.log(' 🤫️ Please save your randomly-generated strong passphrase somewhere safe (e.g., 1password, etc.):')
+
+  // const passphraseSpinner = ora({
+  //   text: 'Generating passphrase',
+  //   color: 'cyan',
+  //   symbol: '✔️',
+  //   indent: 8,
+  // })
 
   do {
-    passphrase = await generatePassphrase()
-    console.log(`\n${passphrase}\n`)
+    passphrase = generateEFFDicewarePassphrase.entropy(100).join (' ')
+
+    const line = '═'.repeat(passphrase.length+2)
+    console.log(`\n    ╔${line}╗`,)
+    console.log(`    ║ ${passphrase} ║`,)
+    console.log(`    ╚${line}╝\n`,)
+
     passphraseConfirmation = await inquirer
     .prompt([
       {
         type: 'confirm',
         name: 'ok',
+        prefix: ' 🙋',
         message: 'Is this passphrase ok?',
         default: true
       }
@@ -44,6 +58,7 @@ async function create (args) {
   .prompt([
     {
       type: 'input',
+      prefix: ' 🙋',
       name: 'domain',
       message: 'Domain',
       default: 'none'
@@ -51,11 +66,13 @@ async function create (args) {
     {
       type: 'list',
       name: 'template',
+      prefix: ' 🙋',
       message: 'Template',
       choices: ['Default', 'Meep', 'Custom']
     },
     {
       type: 'input',
+      prefix: ' 🙋',
       name: 'customTemplate',
       message: 'Custom template URL',
       default: 'https://place.small-web.org/template/default',
@@ -75,15 +92,3 @@ module.exports = create
 //
 // Private
 //
-
-// Returns a promise that resolves to a passphrase.
-function generatePassphrase () {
-  return new Promise (resolve => {
-    // On next tick, so the interface has a chance to update.
-    setTimeout(() => {
-      const passphrase = generateEFFDicewarePassphrase.entropy(100).join (' ')
-      resolve(passphrase)
-    }, 0)
-  })
-}
-
