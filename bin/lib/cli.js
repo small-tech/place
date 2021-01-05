@@ -18,6 +18,8 @@ class CommandLineInterface {
     // ===== these are frequently used, even though version and help are commands and not options.
     //       We do not accept this form for any other command, however.
     const commands = [
+      ['create', arg0 === 'create'],
+
       ['serve', arg0 === 'serve'],
 
       ['push', arg0 === 'push'],
