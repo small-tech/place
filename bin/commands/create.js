@@ -15,11 +15,33 @@ const Place = require('../../index')
 const inquirer = require('inquirer')
 const ora = require('ora')
 const os = require('os')
+const fs = require('fs')
+const path = require('path')
+const chalk = require('chalk')
 const generateEFFDicewarePassphrase = require('eff-diceware-passphrase')
 
 async function create (args) {
 
   Place.logAppNameAndVersion()
+
+  let folder = '.'
+  if (args.positional.length === 1) {
+    folder = args.positional[0]
+  }
+
+  const placePath = path.resolve(folder)
+
+  const domainFromPlacePath = placePath.slice(placePath.lastIndexOf(path.sep) + 1)
+
+  if (fs.existsSync(placePath)) {
+    if (fs.readdirSync(placePath).length !== 0) {
+      console.log(` ❌️ Folder ${chalk.yellow(placePath)} not empty.`)
+      console.log(chalk.hsl(329,100,50)('\n    Refusing to continue.'))
+      process.exit(1)
+    }
+  }
+
+  console.log(` ℹ️  Your small web place will be created at ${chalk.green(placePath)}\n`)
 
   let passphrase
   let passphraseConfirmation
@@ -58,11 +80,21 @@ async function create (args) {
   const details = await inquirer
   .prompt([
     {
-      type: 'input',
+      type: 'list',
       prefix: ' 🙋',
       name: 'domain',
       message: 'Domain',
-      default: os.hostname()
+      choices: [`Development default based on folder name (${domainFromPlacePath})`, `Production default based on hostname (${os.hostname()})`, 'Custom']
+    },
+    {
+      type: 'input',
+      prefix: ' 🙋',
+      name: 'customDomain',
+      message: 'Custom domain',
+      default: os.hostname(),
+      when: function (details) {
+        return details.domain === 'Custom'
+      }
     },
     {
       type: 'list',
