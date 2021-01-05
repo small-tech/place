@@ -31,7 +31,15 @@ async function create (args) {
 
   const placePath = path.resolve(folder)
 
-  const domainFromPlacePath = placePath.slice(placePath.lastIndexOf(path.sep) + 1)
+  const lastPathSeparator = placePath.lastIndexOf(path.sep)
+  const domainFromPlacePath = placePath.slice(lastPathSeparator + 1)
+  const placePathParent = placePath.slice(0, lastPathSeparator)
+
+  if (!fs.existsSync(placePathParent)) {
+    console.log(` ❌️ Parent folder ${chalk.yellow(placePathParent)} does not exist.`)
+    console.log(chalk.hsl(329,100,50)('\n    Refusing to continue.'))
+    process.exit(1)
+  }
 
   if (fs.existsSync(placePath)) {
     if (fs.readdirSync(placePath).length !== 0) {
