@@ -49,12 +49,13 @@ async function create (args) {
     }
   }
 
-  console.log(` ℹ️  Your small web place will be created at ${chalk.green(placePath)}\n`)
+  console.log(` ℹ️  Your Small Web place will be created at ${chalk.green(placePath)}\n`)
 
   let passphrase
   let passphraseConfirmation
 
-  console.log(' 🤫️ Please save your randomly-generated strong passphrase somewhere safe (e.g., 1password, etc.):')
+  console.log(chalk.yellow(' 🤫️ Please save your randomly-generated strong passphrase somewhere safe'))
+  console.log(chalk.yellow(chalk.italic('    (e.g., in a secure password manager like 1password, etc.)')))
 
   // const passphraseSpinner = ora({
   //   text: 'Generating passphrase',
@@ -77,7 +78,7 @@ async function create (args) {
         type: 'confirm',
         name: 'ok',
         prefix: ' 🙋',
-        message: 'Is this passphrase ok?',
+        message: 'Do you like this passphrase?',
         default: true
       }
     ])
@@ -87,23 +88,6 @@ async function create (args) {
 
   const details = await inquirer
   .prompt([
-    {
-      type: 'list',
-      prefix: ' 🙋',
-      name: 'domain',
-      message: 'Domain',
-      choices: [`Development default based on folder name (${domainFromPlacePath})`, `Production default based on hostname (${os.hostname()})`, 'Custom']
-    },
-    {
-      type: 'input',
-      prefix: ' 🙋',
-      name: 'customDomain',
-      message: 'Custom domain',
-      default: os.hostname(),
-      when: function (details) {
-        return details.domain === 'Custom'
-      }
-    },
     {
       type: 'list',
       name: 'template',
@@ -126,6 +110,46 @@ async function create (args) {
     }
   ])
 
+  // Show the summary and get confirmation before starting the process.
+
+  console.log('')
+  console.log('    Summary')
+  console.log('    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+  console.log('')
+  console.log(`    Folder    : ${placePath}`)
+  console.log(`    Domain    : ${domainFromPlacePath} ⃰`)
+  console.log(`    Template  : ${details.customTemplate || details.template}`)
+  console.log('')
+  console.log('    Passphrase: ')
+  console.log('')
+  console.log(`    ${passphrase}`)
+  console.log('')
+  console.log(chalk.italic(chalk.yellow('    (Please make sure you save your passphrase in your password manager.)')))
+  console.log('')
+  console.log(chalk.italic('    ⃰ The domain is automatically derived from the folder name.'))
+  console.log('    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+  console.log('')
+
+  const confirmCreate = await inquirer
+  .prompt([
+    {
+      type: 'confirm',
+      name: 'ok',
+      prefix: ' 🙋',
+      message: 'Continue with these settings?',
+      default: true
+    }
+  ])
+
+  if (!confirmCreate.ok) {
+    console.log('\n ❌️ Aborting!')
+    console.log(chalk.hsl(329,100,50)('\n    Goodbye.'))
+    process.exit(1)
+  }
+
+  console.log('\n ✨️ Creating your Small Web place…')
+
+  // TODO.
 }
 
 module.exports = create
