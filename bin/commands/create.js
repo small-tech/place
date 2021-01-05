@@ -14,6 +14,7 @@
 const Place = require('../../index')
 const inquirer = require('inquirer')
 const ora = require('ora')
+const os = require('os')
 const generateEFFDicewarePassphrase = require('eff-diceware-passphrase')
 
 async function create (args) {
@@ -61,7 +62,7 @@ async function create (args) {
       prefix: ' 🙋',
       name: 'domain',
       message: 'Domain',
-      default: 'none'
+      default: os.hostname()
     },
     {
       type: 'list',
@@ -92,3 +93,14 @@ module.exports = create
 //
 // Private
 //
+
+function allLocalInterfaces () {
+  // Support all local interfaces so that the machine can be reached over the local network via IPv4.
+  // This is very useful for testing with multiple devices over the local area network without needing to expose
+  // the machine over the wide area network/Internet using a service like ngrok.
+  return Object.entries(os.networkInterfaces())
+  .map(iface =>
+    iface[1].filter(addresses =>
+      addresses.family === 'IPv4')
+      .map(addresses => addresses.address)).flat()
+}
