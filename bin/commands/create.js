@@ -11,10 +11,14 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+const Place = require('../../index')
 const inquirer = require('inquirer')
 const generateEFFDicewarePassphrase = require('eff-diceware-passphrase')
 
 async function create (args) {
+
+  Place.logAppNameAndVersion()
+
   let passphrase
   let passphraseConfirmation
 
