@@ -129,6 +129,10 @@ class Place {
 
   static releaseChannelFormattedForConsole (prefix = ' ') {
 
+    const lightGreen = chalk.rgb(203,232,155)
+    const midGreen = chalk.rgb(164, 199, 118)
+    const darkGreen = chalk.rgb(0, 98, 91)
+
     switch(this.releaseChannel) {
 
       // Spells ALPHA in large red block letters.
@@ -155,11 +159,11 @@ class Place {
 
         default:
           return [
-            chalk.hsl(329,100,50)('██████  ██       █████   ██████ ███████\n'),
-            chalk.hsl(329,100,60)(`${prefix}██   ██ ██      ██   ██ ██      ██\n`),
-            chalk.hsl(329,100,70)(`${prefix}██████  ██      ███████ ██      █████\n`),
-            chalk.hsl(329,100,80)(`${prefix}██      ██      ██   ██ ██      ██\n`),
-            chalk.hsl(329,100,90)(`${prefix}██      ███████ ██   ██  ██████ ███████\n`),
+            chalk.hsl(329,100,90)(`${prefix}██████  ██       █████   ██████ ███████ `) + midGreen('      ███') + lightGreen('██████\n'),
+            chalk.hsl(329,100,80)(`${prefix}██   ██ ██      ██   ██ ██      ██     `) + midGreen('      ██') + darkGreen('█') + midGreen('██') + lightGreen('██████\n'),
+            chalk.hsl(329,100,70)(`${prefix}██████  ██      ███████ ██      █████  `) + midGreen('     ██') + darkGreen('███') + midGreen('██') + lightGreen('██████\n'),
+            chalk.hsl(329,100,60)(`${prefix}██      ██      ██   ██ ██      ██     `) + midGreen('    ██') + darkGreen('█████') + midGreen('██') + lightGreen('██████\n'),
+            chalk.hsl(329,100,50)(`${prefix}██      ███████ ██   ██  ██████ ███████`) + midGreen('   ██') + darkGreen('███████') + midGreen('██') + lightGreen('██████\n'),
             '\n'
           ]
     }
@@ -185,13 +189,13 @@ class Place {
     }
 
     if (!Place.#appNameAndVersionAlreadyLogged && !process.argv.includes('--dont-log-app-name-and-version')) {
-      let prefix1 = '    '
+      let prefix1 = ''
       let prefix2 = '    '
 
       this.readAndCacheManifest()
 
       let message = [
-        this.releaseChannel === this.RELEASE_CHANNEL.release || this.binaryVersion === '19481210233000' /* (dev) */ ? `\n${prefix1}` : `\n${prefix1}Place\n\n`
+        this.releaseChannel === this.RELEASE_CHANNEL.release || this.binaryVersion === '19481210233000' /* (dev) */ ? `` : `${prefix2}Place\n\n`
       ].concat(this.releaseChannelFormattedForConsole(prefix2)).concat([
         `${prefix2}Created ${clr(this.humanReadableBinaryVersion, 'green')}\n`,
         '\n',
@@ -207,10 +211,6 @@ class Place {
         `${prefix2}║ https://small-tech.org/fund-us            ║\n`,
         `${prefix2}╚═══════════════════════════════════════════╝\n`,
       ])
-
-      if (compact) {
-        message = message.map(l => l.replace(/^     /, ''))
-      }
 
       message = message.join('')
 
