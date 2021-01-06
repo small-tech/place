@@ -632,6 +632,7 @@ class Place {
 
     this.appAddTest500ErrorPage()
 
+    this.addPublicKeysRoute()
     this.appAddGitRoutes()
 
     this.appAddDynamicRoutes()
@@ -1075,6 +1076,33 @@ class Place {
     })
   }
 
+  // Add keys route
+  addPublicKeysRoute () {
+    // TODO: Refactor; remove redundancy with appAddGitRoutes()
+    const placeFullPath = path.resolve(this.pathToServe)
+    const placeName = placeFullPath.slice(placeFullPath.lastIndexOf(path.sep) + 1)
+    const placeDataPath = path.join(Place.settingsDirectory, placeName)
+
+    const placeKeysPath = path.join(placeDataPath, 'public-keys.json')
+
+    if (!fs.existsSync(placeKeysPath)) {
+      this.log(`\n   ❌    ${clr('❨Place❩ Error:', 'red')} Place keys file does not exist at ${placeKeysPath}. Have you run place create?\n`)
+      process.exit(1)
+    }
+
+    const publicKeys = JSON.parse(fs.readFileSync(placeKeysPath, 'utf-8'))
+
+    this.app.use((request, response, next) => {
+      if (request.path === '/keys') {
+        response.json(publicKeys)
+      } else {
+        next()
+      }
+    })
+
+    this.log(`   🔑️    ❨Place❩ Serving public keys at /keys`)
+  }
+
   // Add git server functionality
   appAddGitRoutes () {
     const placeFullPath = path.resolve(this.pathToServe)
@@ -1082,8 +1110,8 @@ class Place {
     const placeDataPath = path.join(Place.settingsDirectory, placeName)
 
     if (!fs.existsSync(placeDataPath)) {
-      this.log(`   🗄️     ❨Place❩ Creating data path for ${placeName}.`)
-      fs.ensureDirSync(placeDataPath)
+      this.log(`\n   ❌    ${clr('❨Place❩ Error:', 'red')} Place data path does not exist at ${placeDataPath}. Have you run place create?\n`)
+      process.exit(1)
     }
 
     const gitServer = new NodeGitServer(placeDataPath, {
@@ -1123,6 +1151,8 @@ class Place {
         gitHandler(request, response)
       }
     })
+
+    this.log(`   🗄️     ❨Place❩ Serving source code repositories at /source/…`)
   }
 
 

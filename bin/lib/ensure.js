@@ -127,7 +127,7 @@ class Ensure {
         Place.logAppNameAndVersion()
 
         console.log('   😇    ❨Place❩ Linux: about to disable privileged ports so we can bind to ports < 1024.')
-        console.log(`                 ${clr('(For details, see: https://source.small-tech.org/place/app/-/issues/169', 'italic')})`)
+        console.log(`         ${clr('(For details, see: https://source.small-tech.org/place/app/-/issues/169', 'italic')})`)
 
         childProcess.execSync('sudo sysctl -w net.ipv4.ip_unprivileged_port_start=0', {env: process.env})
       } catch (error) {
