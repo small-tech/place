@@ -15,10 +15,12 @@ const Place = require('../../index')
 const inquirer = require('inquirer')
 const ora = require('ora')
 const os = require('os')
-const fs = require('fs')
+const fs = require('fs-extra')
 const path = require('path')
 const chalk = require('chalk')
 const generateEFFDicewarePassphrase = require('eff-diceware-passphrase')
+
+const git = require('isomorphic-git')
 
 async function create (args) {
 
@@ -56,13 +58,6 @@ async function create (args) {
 
   console.log(chalk.yellow(' 🤫️ Please save your randomly-generated strong passphrase somewhere safe'))
   console.log(chalk.yellow(chalk.italic('    (e.g., in a secure password manager like 1password, etc.)')))
-
-  // const passphraseSpinner = ora({
-  //   text: 'Generating passphrase',
-  //   color: 'cyan',
-  //   symbol: '✔️',
-  //   indent: 8,
-  // })
 
   do {
     passphrase = generateEFFDicewarePassphrase.entropy(100).join (' ')
@@ -147,9 +142,32 @@ async function create (args) {
     process.exit(1)
   }
 
-  console.log('\n ✨️ Creating your Small Web place…')
+  console.log('\n ✨️ Creating your Small Web place…\n')
 
-  // TODO.
+  // Make sure the path exists.
+  fs.ensureDirSync(placePath)
+
+
+  // Derive SSH key from the passphrase.
+  // TODO
+
+  // Derive Git password from the passphrase.
+  // TODO
+
+  //
+  // Create the git repository.
+  //
+
+  const spinner = ora({
+    text: '',
+    color: 'cyan'
+  })
+
+  spinner.text = 'Initialising source code repository…'
+
+  spinner.start()
+  await git.init({ fs, dir: placePath})
+  spinner.stopAndPersist({ symbol: ' ✔️ ', text: 'Source code repository initialised.' })
 }
 
 module.exports = create
