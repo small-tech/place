@@ -1082,7 +1082,7 @@ class Place {
     const placeDataPath = path.join(Place.settingsDirectory, placeName)
 
     if (!fs.existsSync(placeDataPath)) {
-      this.log(`   🗄️     ❨Place❩ Creating bare git repository for ${placeName}.`)
+      this.log(`   🗄️     ❨Place❩ Creating data path for ${placeName}.`)
       fs.ensureDirSync(placeDataPath)
     }
 
