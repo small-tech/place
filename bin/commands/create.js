@@ -167,6 +167,7 @@ async function create (args) {
 
   spinner.start()
   await git.init({ fs, dir: placePath})
+  await git.addRemote ({ fs, dir: placePath, remote: 'origin', url: `https://${domainFromPlacePath}/source/self`})
   spinner.stopAndPersist({ symbol: ' ✔️ ', text: 'Source code repository initialised.' })
 }
 
