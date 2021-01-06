@@ -147,6 +147,8 @@ async function create (args) {
   // Make sure the path exists.
   fs.ensureDirSync(placePath)
 
+  // Derive ed25519 signing keys from passphrase and persist the public key.
+  // TODO
 
   // Derive SSH key from the passphrase.
   // TODO
@@ -166,8 +168,20 @@ async function create (args) {
   spinner.text = 'Initialising source code repository…'
 
   spinner.start()
+
+  // Initialise the git repository.
   await git.init({ fs, dir: placePath})
+
+  // Add remotes for the domain name (as derived from the folder name), localhost (for local testing), Local Area Network IP address (for same LAN testing), and hostname (for staging via PageKite, etc.).
   await git.addRemote ({ fs, dir: placePath, remote: 'origin', url: `https://${domainFromPlacePath}/source/self`})
+  await git.addRemote ({ fs, dir: placePath, remote: 'localhost', url: 'https://localhost/source/self'})
+  await git.addRemote ({ fs, dir: placePath, remote: 'hostname', url: `https://${os.hostname()}/source/self`})
+
+  const localAreaNetworkInterfaces = allLocalInterfaces().filter(value => value !== '127.0.0.1')
+  if (localAreaNetworkInterfaces.length > 0) {
+    await git.addRemote ({ fs, dir: placePath, remote: 'ip', url: `https://${localAreaNetworkInterfaces[0]}/source/self`})
+  }
+
   spinner.stopAndPersist({ symbol: ' ✔️ ', text: 'Source code repository initialised.' })
 }
 

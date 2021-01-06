@@ -34,6 +34,7 @@ const morgan                    = require('morgan')
 const chokidar                  = require('chokidar')
 const decache                   = require('decache')
 const prepareRequest            = require('bent')
+const NodeGitServer             = require('node-git-server')
 const clr                       = require('./lib/clr')
 const cli                       = require('./bin/lib/cli')
 const Stats                     = require('./lib/Stats')
@@ -629,8 +630,10 @@ class Place {
     // Continue configuring the rest of the app routes.
     this.addCustomErrorPagesSupport()
 
-    // Add routes
     this.appAddTest500ErrorPage()
+
+    this.appAddGitRoutes()
+
     this.appAddDynamicRoutes()
     this.appAddStaticRoutes()
     this.appAddWildcardRoutes()
@@ -1068,6 +1071,56 @@ class Place {
         throw new Error('Bad things have happened.')
       } else {
         next()
+      }
+    })
+  }
+
+  // Add git server functionality
+  appAddGitRoutes () {
+    const placeFullPath = path.resolve(this.pathToServe)
+    const placeName = placeFullPath.slice(placeFullPath.lastIndexOf(path.sep) + 1)
+    const placeDataPath = path.join(Place.settingsDirectory, placeName)
+
+    if (!fs.existsSync(placeDataPath)) {
+      this.log(`   🗄️     ❨Place❩ Creating bare git repository for ${placeName}.`)
+      fs.ensureDirSync(placeDataPath)
+    }
+
+    const gitServer = new NodeGitServer(placeDataPath, {
+      autoCreate: true,
+      authenticate: ({type, repo, user}, next) => {
+        // console.log('Type', type)
+        if (type === 'push' || type === 'fetch') {
+          user((accountName, password) => {
+            // console.log('Authenticating:', accountName, password)
+            if (accountName === '42' && password === '42') {
+              next()
+            } else {
+              next('wrong password')
+            }
+          })
+        } else {
+          next()
+        }
+      }
+    })
+
+    gitServer.on('push', push => {
+      console.log(`   🗄️     ❨Place❩ Receiving git push: ${push.repo}/${push.commit} (${push.branch})`)
+      push.accept()
+    })
+
+    gitServer.on('fetch', fetch => {
+      console.log(`   🗄️     ❨Place❩ Serving git fetch: ${fetch.commit}`)
+      fetch.accept()
+    })
+
+    const gitHandler = gitServer.handle.bind(gitServer)
+
+    // Let the git server handle any calls to /source/…
+    this.app.use((request, response) => {
+      if (request.url.startsWith('/source/')) {
+        gitHandler(request, response)
       }
     })
   }
