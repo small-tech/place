@@ -14,6 +14,22 @@
 
 Place is a hard fork of [Site.js](https://sitejs.org).
 
+## Notes
+
+  - Binary builds are currently broken. Run `node bin/place` to test.
+
+## Commands
+
+### create
+
+```shell
+place create <folder>
+```
+
+Creates a new place at the passed folder path.
+
+## Background
+
 The goal of Site.js was to create a server that could run all our current sites at [Small Technology Foundation](https://small-tech.org) and to thus create a solid base of a self-updating, zero-maintenance, single-tenant web server.
 
 Place jettisons some of the generic web-related functionality (e.g., static site generation via Hugo, etc.) in Site.js and reimagines other features (routing, data exchange, workflows, etc.) to implement a tool specifically for [Small Web](https://small-tech.org/research-and-development) development.
