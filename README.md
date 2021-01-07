@@ -2,6 +2,16 @@
 
 ## A tool for building your own Small Web place.
 
+```
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃                            WARNING                           ┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃ Place is pre-release and rapidly evolving. Things may be un- ┃
+┃ implemented, incomplete or broken. Please feel free to play  ┃
+┃ but we’re not currently looking for contributions or issues. ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+```
+
 Place is a hard fork of [Site.js](https://sitejs.org).
 
 The goal of Site.js was to create a server that could run all our current sites at [Small Technology Foundation](https://small-tech.org) and to thus create a solid base of a self-updating, zero-maintenance, single-tenant web server.
@@ -20,7 +30,7 @@ We exist in part thanks to patronage by people like you. If you share [our visio
 
 ## Copyright
 
-&copy; 2019-2020 [Aral Balkan](https://ar.al), [Small Technology Foundation](https://small-tech.org).
+&copy; 2019-2021 [Aral Balkan](https://ar.al), [Small Technology Foundation](https://small-tech.org).
 
 Let’s Encrypt is a trademark of the Internet Security Research Group (ISRG). All rights reserved. Node.js is a trademark of Joyent, Inc. and is used with its permission. We are not endorsed by or affiliated with Joyent or ISRG.
 
