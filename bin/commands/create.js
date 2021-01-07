@@ -21,6 +21,7 @@ const chalk = require('chalk')
 const git = require('isomorphic-git')
 const generateEFFDicewarePassphrase = require('eff-diceware-passphrase')
 const session25519 = require('session25519')
+const crypto = require('crypto')
 
 async function create (args) {
 
