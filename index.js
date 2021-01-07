@@ -1149,6 +1149,8 @@ class Place {
     this.app.use((request, response) => {
       if (request.url.startsWith('/source/')) {
         gitHandler(request, response)
+      } else {
+        next()
       }
     })
 
