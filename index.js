@@ -1146,7 +1146,7 @@ class Place {
     const gitHandler = gitServer.handle.bind(gitServer)
 
     // Let the git server handle any calls to /source/…
-    this.app.use((request, response) => {
+    this.app.use((request, response, next) => {
       if (request.url.startsWith('/source/')) {
         gitHandler(request, response)
       } else {
