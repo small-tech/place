@@ -192,11 +192,12 @@ async function create (args) {
 
   console.log(' ✔️  Public keys stored.')
 
+  // Derive Git password from the passphrase.
+  // TODO
+
   // Derive SSH key from the passphrase.
   // TODO
 
-  // Derive Git password from the passphrase.
-  // TODO
 
   //
   // Create the git repository.
@@ -227,9 +228,13 @@ module.exports = create
 // Private
 //
 
-function generatePublicKeys (domain, passphrase) {
+function generatePublicKeys (salt, passphrase) {
   return new Promise((resolve, reject) => {
-    session25519(domain, passphrase, (error, keys) => {
+    // The salts, being based on domains, satisfy the uniqueness property but they can be short
+    // (relative to the size of the key material). To discourage rainbow tables, we use a blake2b-512
+    // hash of the passed shorter salt).
+    salt = crypto.createHash('blake2b512').update(salt).digest('hex')
+    session25519(salt, passphrase, (error, keys) => {
       if (error) {
         return reject(error)
       }
