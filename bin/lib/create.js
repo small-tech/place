@@ -40,7 +40,7 @@ async function create (args) {
 
   //
   // Safety checks: let’s not overwrite anything that might
-  // already exist.
+  // already exist without asking.
   //
 
   if (!fs.existsSync(placePathParent)) {
@@ -49,11 +49,35 @@ async function create (args) {
     process.exit(1)
   }
 
+  let promptForTemplate = true
+
+  // If there is already content in the place path, let’s ask if we should
+  // continue and also flag that we shouldn’t install a new template (as that
+  // would override the content).
   if (fs.existsSync(placePath)) {
     if (fs.readdirSync(placePath).length !== 0) {
-      console.log(` ❌️ Folder ${chalk.yellow(placePath)} is not empty.`)
-      console.log(chalk.hsl(329,100,50)('\n    Refusing to continue.'))
-      process.exit(1)
+      console.log(` ❌️ Place at ${chalk.yellow(placePath)} is not empty.`)
+
+      const confirmNonEmptyPlacePath = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'ok',
+          prefix: ' 🙋',
+          message: 'Continuing will not overwrite this content. Continue?',
+          default: true
+        }
+      ])
+
+      if (confirmNonEmptyPlacePath.ok) {
+        // There is existing content in the folder, flag that we should not
+        // ask to install a template (which would corrupt/overwrite it).
+        promptForTemplate = false
+        console.log(` ✔️  Will maintain existing content in ${chalk.yellow(placeDomain)} and not prompt for template installation.`)
+      } else {
+        console.log('\n ❌️ Aborting!')
+        console.log(chalk.hsl(329,100,50)('\n    Goodbye.'))
+        process.exit(1)
+      }
     }
   }
 
@@ -125,7 +149,8 @@ async function create (args) {
       name: 'template',
       prefix: ' 🙋',
       message: 'Template',
-      choices: ['Default', 'Meep', 'Custom']
+      choices: ['Default', 'Meep', 'Custom'],
+      when: promptForTemplate
     },
     {
       type: 'input',
@@ -141,6 +166,10 @@ async function create (args) {
       }
     }
   ])
+
+  if (details.template === undefined) {
+    details.template = 'None (will keep existing content in folder)'
+  }
 
   // Show the summary and get confirmation before starting the process.
 
