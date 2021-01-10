@@ -17,6 +17,7 @@
 const fs = require('fs')
 const pathModule = require('path')
 const chalk = require('chalk')
+const inquirer = require('inquirer')
 const create = require('../lib/create')
 
 // Note: requires are at the bottom to avoid a circular reference as ../../index (Place)
@@ -110,31 +111,36 @@ async function serve (args) {
   //
   const folder = path === null ? '.' : path
   const placePath = pathModule.resolve(folder)
-
-  if (!fs.existsSync(placePath)) {
-    Place.logAppNameAndVersion()
-    console.log(` ❌️ Folder ${chalk.yellow(placePath)} does not exist.`)
-    console.log(chalk.hsl(329,100,50)('\n    Refusing to continue.'))
-    process.exit(1)
-  }
-
   const lastPathSeparator = placePath.lastIndexOf(pathModule.sep)
   const placeDomain = placePath.slice(lastPathSeparator + 1)
-
-  console.log('folder', folder)
-
-  // Make sure the place data path exists.
   const placeDataPath = pathModule.join(Place.settingsDirectory, placeDomain)
 
-  if (!fs.existsSync(placeDataPath)) {
+  if (!fs.existsSync(placePath) || !fs.existsSync(placeDataPath)) {
     Place.logAppNameAndVersion()
-    console.log(` ℹ️  Place is not initialised (could not find data at ${chalk.yellow(placeDataPath)}).`)
+    console.log(` ℹ️  Place ${placeDomain} is not initialised.`)
+
+    const confirmCreate = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'create',
+        prefix: ' 🙋',
+        message: `Create a new place at ${chalk.green(placePath)}?`,
+        default: true
+      }
+    ])
+
+    if (!confirmCreate.create) {
+      console.log('\n ❌️ Aborting!')
+      console.log(chalk.hsl(329,100,50)('\n    Goodbye.'))
+      process.exit(1)
+    }
+
+    // Create the place before continuing to serve it.
     await create({
       positional: [placePath],
       named: args.named
     })
   }
-
 
   //
   // Parse named arguments.

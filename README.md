@@ -32,7 +32,6 @@ Place is a hard fork of [Site.js](https://sitejs.org).
     place aral.small-web.org
     ```
 
-
 To server an existing place, just run step 2. (If you’re already in the directory, just run `place`).
 
 ## Background

@@ -51,19 +51,37 @@ async function create (args) {
 
   if (fs.existsSync(placePath)) {
     if (fs.readdirSync(placePath).length !== 0) {
-      console.log(` ❌️ Folder ${chalk.yellow(placePath)} not empty.`)
+      console.log(` ❌️ Folder ${chalk.yellow(placePath)} is not empty.`)
       console.log(chalk.hsl(329,100,50)('\n    Refusing to continue.'))
       process.exit(1)
     }
   }
 
-  // Make sure the place data path exists.
+  // Do not overwrite place data path if it exists without asking first.
   const placeDataPath = path.join(Place.settingsDirectory, placeDomain)
 
   if (fs.existsSync(placeDataPath)) {
-    console.log(` ❌️ Data path ${chalk.yellow(placeDataPath)} not empty.`)
-    console.log(chalk.hsl(329,100,50)('\n    Refusing to continue.'))
-    process.exit(1)
+    console.log(` ⚠️  There is existing data and settings for ${chalk.yellow(placeDomain)} at ${chalk.yellow(placeDataPath)}.`)
+
+    const confirmOverwriteOfPlaceData = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'ok',
+        prefix: ' 🙋',
+        message: 'Continuing will overwrite this data. Are you sure?',
+        default: false
+      }
+    ])
+
+    if (confirmOverwriteOfPlaceData.ok) {
+      // Remove the existing data directory.
+      fs.removeSync(placeDataPath)
+      console.log(` ✔️  Existing data and settings for ${chalk.yellow(placeDomain)} deleted.`)
+    } else {
+      console.log('\n ❌️ Aborting!')
+      console.log(chalk.hsl(329,100,50)('\n    Goodbye.'))
+      process.exit(1)
+    }
   }
 
   //
