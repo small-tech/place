@@ -106,7 +106,7 @@ async function serve (args) {
   path = path === null ? null : path
 
   //
-  // Check if place has been initiatlised yet.
+  // Check if place has been initialised yet.
   // If not, run the creation process.
   //
   const folder = path === null ? '.' : path
