@@ -18,15 +18,22 @@ Place is a hard fork of [Site.js](https://sitejs.org).
 
   - Binary builds are currently broken. Run `node bin/place` to test.
 
-## Commands
+## Creating a new place
 
-### create
+1. Create a folder with the name of your place’s domain:
 
-```shell
-place create <folder>
-```
+    ```
+    aral.small-web.org
+    ```
 
-Creates a new place at the passed folder path.
+2. Run place.
+
+    ```
+    place aral.small-web.org
+    ```
+
+
+To server an existing place, just run step 2. (If you’re already in the directory, just run `place`).
 
 ## Background
 

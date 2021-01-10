@@ -14,7 +14,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-// Note: requires are at the bottom to avoid a circular reference as ../../index (Site)
+const fs = require('fs')
+const pathModule = require('path')
+const chalk = require('chalk')
+const create = require('../lib/create')
+
+// Note: requires are at the bottom to avoid a circular reference as ../../index (Place)
 // ===== also requires this module.
 // const generateContent = require('../lib/generate-content')
 
@@ -39,7 +44,7 @@ let global = null
 let port = null
 let path = null
 
-function serve (args) {
+async function serve (args) {
 
   // We repeat the assignment to null here to ensure these variables are null
   // in case the server was restarted and the module itself was cached.
@@ -98,6 +103,38 @@ function serve (args) {
   global = global === null ? false : global
   port = port === null ? 443 : port
   path = path === null ? null : path
+
+  //
+  // Check if place has been initiatlised yet.
+  // If not, run the creation process.
+  //
+  const folder = path === null ? '.' : path
+  const placePath = pathModule.resolve(folder)
+
+  if (!fs.existsSync(placePath)) {
+    Place.logAppNameAndVersion()
+    console.log(` ❌️ Folder ${chalk.yellow(placePath)} does not exist.`)
+    console.log(chalk.hsl(329,100,50)('\n    Refusing to continue.'))
+    process.exit(1)
+  }
+
+  const lastPathSeparator = placePath.lastIndexOf(pathModule.sep)
+  const placeDomain = placePath.slice(lastPathSeparator + 1)
+
+  console.log('folder', folder)
+
+  // Make sure the place data path exists.
+  const placeDataPath = pathModule.join(Place.settingsDirectory, placeDomain)
+
+  if (!fs.existsSync(placeDataPath)) {
+    Place.logAppNameAndVersion()
+    console.log(` ℹ️  Place is not initialised (could not find data at ${chalk.yellow(placeDataPath)}).`)
+    await create({
+      positional: [placePath],
+      named: args.named
+    })
+  }
+
 
   //
   // Parse named arguments.
@@ -169,7 +206,7 @@ function serve (args) {
       // Start serving the site.
       let site
       try {
-        site = new Site(options)
+        site = new Place(options)
       } catch (error) {
         // Rethrow
         throw(error)
@@ -244,7 +281,7 @@ function ensurePort (port) {
 
 module.exports = serve
 
-// Note: requires are at the bottom to avoid a circular reference as ../../index (Site)
+// Note: requires are at the bottom to avoid a circular reference as ../../index (Place)
 // ===== also requires this module.
 
 const ensure = require('../lib/ensure')
@@ -252,4 +289,4 @@ const status = require('../lib/status')
 const tcpPortUsed = require('tcp-port-used')
 const clr = require('../../lib/clr')
 const errors = require('../../lib/errors')
-const Site = require('../../index')
+const Place = require('../../index')
