@@ -20,7 +20,7 @@ const childProcess              = require('child_process')
 const http                      = require('http')
 const https                     = require('@small-tech/https')
 const expressWebSocket          = require('@small-tech/express-ws')
-const instant                   = require('@small-tech/instant')
+// const instant                   = require('@small-tech/instant')
 const crossPlatformHostname     = require('@small-tech/cross-platform-hostname')
 const getRoutes                 = require('@small-tech/web-routes-from-files')
 const JSDB                      = require('@small-tech/jsdb')
@@ -43,6 +43,7 @@ const errors                    = require('./lib/errors')
 const Util                      = require('./lib/Util')
 const chalk                     = require('chalk')
 
+const snowpack                  = require('snowpack')
 
 class Place {
 
@@ -416,12 +417,8 @@ class Place {
         url = `🎨 ${url}`
       } else if (url.includes('.css?v=')) {
         url = `✨ Live reload (CSS) ${url}`
-      } else if (url === '/instant/client/bundle.js') {
-        url = `⚡ Live reload script load`
       } else if (url.endsWith('js')) {
         url = `⚡ ${url}`
-      } else if (url === '/instant/events') {
-        url = `✨ Live reload`
       } else {
         url = `📄 ${url}`
       }
@@ -627,6 +624,51 @@ class Place {
     // Async
     // await this.addHugoSupport()
 
+    // Inject Snowpack for ESM-based workflow.
+    const snowpackConfiguration = snowpack.createConfiguration({
+      mount: {
+        /* ... */
+      },
+      plugins: [
+        /* ... */
+      ],
+      packageOptions: {
+        /* ... */
+        polyfillNode: true
+      },
+      devOptions: {
+        /* ... */
+        open: 'none'
+      },
+      buildOptions: {
+        /* ... */
+      },
+    })
+    const snowpackServer = await snowpack.startServer({
+      cwd: process.cwd(),
+      config: snowpackConfiguration,
+      lockfile: null
+    })
+
+    this.app.use(async (request, response, next) => {
+      try {
+        const buildResult = await snowpackServer.loadUrl(request.url)
+
+        console.log('build result', buildResult)
+        response.setHeader('Content-Type', buildResult.contentType)
+        response.end(buildResult.contents)
+      } catch (error) {
+        if (error.message === 'NOT_FOUND') {
+          console.log('Snowpack: Not found, falling through.')
+          // 404 on the client: let other routes handle this if possible.
+          next()
+        } else {
+          // Other error: bubble up.
+          next(error)
+        }
+      }
+    })
+
     // Continue configuring the rest of the app routes.
     this.addCustomErrorPagesSupport()
 
@@ -638,6 +680,7 @@ class Place {
     this.appAddDynamicRoutes()
     this.appAddStaticRoutes()
     this.appAddWildcardRoutes()
+
   }
 
 
@@ -1161,7 +1204,7 @@ class Place {
   // Add static routes.
   // (Note: directories that begin with a dot (hidden directories) will be ignored.)
   appAddStaticRoutes () {
-    const instantOptions = { watch: ['html', 'js', 'css', 'svg', 'png', 'jpg', 'jpeg'] }
+    // const instantOptions = { watch: ['html', 'js', 'css', 'svg', 'png', 'jpg', 'jpeg'] }
 
     const roots = []
 
@@ -1175,8 +1218,9 @@ class Place {
     // Add the regular static web root.
     roots.push(this.pathToServe)
 
-    this.app.__staticRoutes = instant(roots, instantOptions)
-    this.app.use(this.app.__staticRoutes)
+    roots.forEach(root => {
+      this.app.use(express.static(root))
+    })
   }
 
 
