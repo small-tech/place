@@ -44,6 +44,7 @@ const Util                      = require('./lib/Util')
 const chalk                     = require('chalk')
 
 const snowpack                  = require('snowpack')
+const snowpackPluginSvelte      = require('@snowpack/plugin-svelte')
 
 class Place {
 
@@ -625,12 +626,16 @@ class Place {
     // await this.addHugoSupport()
 
     // Inject Snowpack for ESM-based workflow.
+    console.log(__dirname)
     const snowpackConfiguration = snowpack.createConfiguration({
       mount: {
         /* ... */
       },
       plugins: [
         /* ... */
+        [path.join(__dirname, 'node_modules', '@snowpack', 'plugin-svelte'), {
+          input: ['.interface', '.svelte']
+        }],
       ],
       packageOptions: {
         /* ... */
@@ -638,13 +643,15 @@ class Place {
       },
       devOptions: {
         /* ... */
-        open: 'none'
+        open: 'none',
+        secure: true,
+        port: 444,
       },
       buildOptions: {
         /* ... */
       },
     })
-    const snowpackServer = await snowpack.startServer({
+    this.snowpackServer = await snowpack.startServer({
       cwd: process.cwd(),
       config: snowpackConfiguration,
       lockfile: null
@@ -652,14 +659,13 @@ class Place {
 
     this.app.use(async (request, response, next) => {
       try {
-        const buildResult = await snowpackServer.loadUrl(request.url)
-
-        console.log('build result', buildResult)
+        const buildResult = await this.snowpackServer.loadUrl(request.url)
         response.setHeader('Content-Type', buildResult.contentType)
         response.end(buildResult.contents)
+        console.log(`${request.url} (${buildResult.originalFileLoc !== null ? `${buildResult.originalFileLoc.replace(process.cwd(), '')}; `: ''}${buildResult.contentType})`)
       } catch (error) {
         if (error.message === 'NOT_FOUND') {
-          console.log('Snowpack: Not found, falling through.')
+          console.log(`${request.url} not found, calling next middleware.`)
           // 404 on the client: let other routes handle this if possible.
           next()
         } else {
@@ -680,9 +686,7 @@ class Place {
     this.appAddDynamicRoutes()
     this.appAddStaticRoutes()
     this.appAddWildcardRoutes()
-
   }
-
 
   // Creates a web socket server.
   createWebSocketServer () {
@@ -728,6 +732,12 @@ class Place {
             resolve()
           })
         })
+      }
+
+      // Shut down the Snowpack server
+      if (this.snowpackServer !== undefined) {
+        this.log('   🚮    ❨Place❩ Shutting down Snowpack server.')
+        await this.snowpackServer.shutdown()
       }
 
       if (globalThis._db) {

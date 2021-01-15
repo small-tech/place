@@ -17,6 +17,9 @@ Place is a hard fork of [Site.js](https://sitejs.org).
 ## Notes
 
   - Binary builds are currently broken. Run `node bin/place` to test.
+  - Basic Snowpack support added. (Fri, Jan 15, 2021)
+  - Basic Svelte support added. (Fri, Jan 15, 2021)
+  - FIXME: Svelte support currently requires that you install `svelte` and `svelte-hmr` in the place that you’re creating. This seems to be an issue with the way plugins are loaded (we’re using the `@snowpack/plugin-svelte`) when Snowpack is [used as middleware](https://www.snowpack.dev/guides/server-side-render#option-2%3A-on-demand-serving-(middleware)). I need to create a small reproducible example of this and open an issue.
 
 ## Creating a new place
 
