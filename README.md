@@ -24,6 +24,8 @@ Place is a hard fork of [Site.js](https://sitejs.org).
       1. Module not found when specifying plugins in a custom server. (e.g., with `@snowpack/plugin-svelte`)
       2. If you work around the first issue by passing, e.g., `path.join(__dirname, '@snowpack', 'plugin-svelte')`, the modules required by the plugin itself are not found unless they are installed in the folder you are serving (even if they are installed in the folder that your server is running from).
 
+    Tracking [in this dicussion](https://github.com/snowpackjs/snowpack/discussions/2327).
+
 ## Creating a new place
 
 1. Create a folder with the name of your place’s domain:
