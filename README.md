@@ -19,7 +19,10 @@ Place is a hard fork of [Site.js](https://sitejs.org).
   - Binary builds are currently broken. Run `node bin/place` to test.
   - Basic Snowpack support added. (Fri, Jan 15, 2021)
   - Basic Svelte support added. (Fri, Jan 15, 2021)
-  - FIXME: Svelte support currently requires that you install `svelte` and `svelte-hmr` in the place that you’re creating. This seems to be an issue with the way plugins are loaded (we’re using the `@snowpack/plugin-svelte`) when Snowpack is [used as middleware](https://www.snowpack.dev/guides/server-side-render#option-2%3A-on-demand-serving-(middleware)). I need to create a small reproducible example of this and open an issue.
+  - FIXME: TLS support for the Snowpack server currently requires that you copy the public and private TLS keys to the directory of the place you’re serving. [Opened discussion here](https://github.com/snowpackjs/snowpack/discussions/2325).
+  - FIXME: Svelte support currently requires that you install `svelte` and `svelte-hmr` in the place that you’re creating. This seems to be an issue with the way plugins are loaded (we’re using the `@snowpack/plugin-svelte`) when Snowpack is [used as middleware](https://www.snowpack.dev/guides/server-side-render#option-2%3A-on-demand-serving-(middleware)). There are two issues to open here:
+      1. Module not found when specifying plugins in a custom server. (e.g., with `@snowpack/plugin-svelte`)
+      2. If you work around the first issue by passing, e.g., `path.join(__dirname, '@snowpack', 'plugin-svelte')`, the modules required by the plugin itself are not found unless they are installed in the folder you are serving (even if they are installed in the folder that your server is running from).
 
 ## Creating a new place
 
