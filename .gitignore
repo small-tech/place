@@ -5,3 +5,5 @@ manifest.json
 .DS_Store
 .db
 .generated
+snowpack.crt
+snowpack.key
