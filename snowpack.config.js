@@ -1,11 +1,6 @@
 const process = require('process')
 const path = require('path')
-const { Stream } = require('stream')
 
-console.log(process.cwd())
-console.log(`${path.relative(process.cwd(), __dirname)}/node_modules/svelte/index.mjs`)
-console.log(require('fs').readFileSync(`${path.relative(process.cwd(), __dirname)}/node_modules/svelte/index.mjs`, 'utf-8'))
-// process.exit()
 
 /** @type {import("snowpack").SnowpackUserConfig } */
 module.exports = {
@@ -21,7 +16,27 @@ module.exports = {
   packageOptions: {
     /* ... */
     polyfillNode: true,
-    // knownEntrypoints: ['svelte', 'svelte/internal']
+    rollup: {
+      plugins: [
+        {
+          name: 'place.small-web.org:inject-svelte',
+          resolveId(id) {
+            console.log('resolving id', id)
+            const svelteBasePath = path.join(__dirname, 'node_modules', 'svelte')
+            const sveltePath = path.join(svelteBasePath, 'index.mjs')
+            const svelteInternalPath = path.join(svelteBasePath, 'internal', 'index.mjs')
+            switch (id) {
+              case 'svelte':
+                return sveltePath
+              case 'svelte/internal':
+                return svelteInternalPath
+              default:
+                return null
+            }
+          }
+        }
+      ]
+    }
   },
   devOptions: {
     /* ... */
