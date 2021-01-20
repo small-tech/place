@@ -44,7 +44,6 @@ const Util                      = require('./lib/Util')
 const chalk                     = require('chalk')
 
 const snowpack                  = require('snowpack')
-const snowpackPluginSvelte      = require('@snowpack/plugin-svelte')
 
 class Place {
 
@@ -626,33 +625,11 @@ class Place {
     // await this.addHugoSupport()
 
     // Inject Snowpack for ESM-based workflow.
-    console.log(__dirname)
-    const snowpackConfiguration = snowpack.createConfiguration({
-      mount: {
-        /* ... */
-      },
-      plugins: [
-        /* ... */
-        [path.join(__dirname, 'node_modules', '@snowpack', 'plugin-svelte'), {
-          input: ['.interface', '.svelte']
-        }],
-      ],
-      packageOptions: {
-        /* ... */
-        polyfillNode: true
-      },
-      devOptions: {
-        /* ... */
-        open: 'none',
-        secure: true,
-        port: 444,
-      },
-      buildOptions: {
-        /* ... */
-      },
-    })
+    const snowpackConfigurationFilePath = path.join(__dirname, 'snowpack.config.js')
+    const snowpackConfiguration = await snowpack.loadConfiguration({}, snowpackConfigurationFilePath)
+    snowpackConfiguration.cwd = this.absolutePathToServe
+    console.log(snowpackConfiguration)
     this.snowpackServer = await snowpack.startServer({
-      cwd: process.cwd(),
       config: snowpackConfiguration,
       lockfile: null
     })
