@@ -23,6 +23,7 @@ Place is a hard fork of [Site.js](https://sitejs.org).
   - FIXME: Svelte support currently requires that you install `svelte` and `svelte-hmr` in the place that you’re creating. This seems to be an issue with the way plugins are loaded (we’re using the `@snowpack/plugin-svelte`) when Snowpack is [used as middleware](https://www.snowpack.dev/guides/server-side-render#option-2%3A-on-demand-serving-(middleware)). There are two issues to open here:
       1. Module not found when specifying plugins in a custom server. (e.g., with `@snowpack/plugin-svelte`)
       2. If you work around the first issue by passing, e.g., `path.join(__dirname, '@snowpack', 'plugin-svelte')`, the modules required by the plugin itself are not found unless they are installed in the folder you are serving (even if they are installed in the folder that your server is running from).
+  - FIXME: Snowpack + plugin-svelte issue: if you use a custom name for svelte files (e.g., `.interface`), imports of Svelte components within Svelte files are not picked up unless you either add them to `packageOptions.knownEntrypoints` or you import them _in the JavaScript file also_. This is not an issue if you use the default `.svelte` extension which leads me to believe that this extension is hardcoded in the plugin. TODO: Open an issue.
 
     Tracking [in this dicussion](https://github.com/snowpackjs/snowpack/discussions/2327).
 
