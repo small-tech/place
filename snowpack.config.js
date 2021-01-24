@@ -1,20 +1,18 @@
 const process = require('process')
 const path = require('path')
 
-
 /** @type {import("snowpack").SnowpackUserConfig } */
 module.exports = {
   mount: {
     /* ... */
   },
   plugins: [
-    /* ... */
     ['@snowpack/plugin-svelte', {
       input: ['.interface', '.svelte']
     }],
   ],
   packageOptions: {
-    /* ... */
+    resolvePaths: [__dirname],
     polyfillNode: true,
     rollup: {
       plugins: [
@@ -39,7 +37,6 @@ module.exports = {
     }
   },
   devOptions: {
-    /* ... */
     output: 'stream', // Don’t clear terminal.
     open: 'none',
     secure: true,
