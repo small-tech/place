@@ -88,7 +88,7 @@
     "snowpack": "file:../../forks/snowpack/snowpack",
     "string-length": "^3.1.0",
     "svelte": "^3.31.2",
-    "svelte-hmr": "^0.12.2",
+    "svelte-hmr": "^0.12.4",
     "tar-stream": "^2.1.4",
     "tcp-port-used": "^1.0.1"
   },
