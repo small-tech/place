@@ -615,11 +615,6 @@ class Place {
   // TODO: Refactor accordingly if we don’t end up using this.
   async configureAppRoutes () {
 
-    await this.appAddDynamicRoutes()
-    this.appAddStaticRoutes()
-    this.appAddWildcardRoutes()
-
-
     let statusOfPathToServe
     try {
       statusOfPathToServe = fs.statSync(this.absolutePathToServe)
@@ -642,7 +637,7 @@ class Place {
     const snowpackConfigurationFilePath = path.join(__dirname, 'snowpack.config.cjs')
     const snowpackConfiguration = await snowpack.loadConfiguration({}, snowpackConfigurationFilePath)
     snowpackConfiguration.cwd = this.absolutePathToServe
-    console.log(snowpackConfiguration)
+    // console.log(snowpackConfiguration)
     this.snowpackServer = await snowpack.startServer({
       config: snowpackConfiguration,
       lockfile: null
@@ -665,6 +660,10 @@ class Place {
         }
       }
     })
+
+    await this.appAddDynamicRoutes()
+    this.appAddStaticRoutes()
+    this.appAddWildcardRoutes()
 
     // Continue configuring the rest of the app routes.
     this.addCustomErrorPagesSupport()
@@ -758,7 +757,8 @@ class Place {
     // add the WebSocket routes (if any) to the app.
     if (this.wssRoutes !== undefined) {
       this.createWebSocketServer()
-      this.wssRoutes.forEach(async route => {
+
+      await asyncForEach(this.wssRoutes, async route => {
         this.log(`   ⛺    ❨Place❩ Adding WebSocket (WSS) route: ${route.path}`)
         // decache(route.callback)
         // Ensure we are loading a fresh copy in case it has changed.
@@ -1439,11 +1439,12 @@ class Place {
 
       // Attempts to load HTTPS routes from the passed directory,
       // adhering to rules 3 & 4.
-      const loadHttpsRoutesFrom = (httpsRoutesDirectory) => {
+      const loadHttpsRoutesFrom = async (httpsRoutesDirectory) => {
         // Attempts to load HTTPS GET routes from the passed directory.
-        const loadHttpsGetRoutesFrom = (httpsGetRoutesDirectory) => {
+        const loadHttpsGetRoutesFrom = async (httpsGetRoutesDirectory) => {
           const httpsGetRoutes = getRoutes(httpsGetRoutesDirectory)
-          httpsGetRoutes.forEach(async route => {
+
+          await asyncForEach(httpsGetRoutes, async route => {
             this.log(`   ⛺    ❨Place❩ Adding HTTPS GET route: ${route.path}`)
 
             // Ensure we are loading a fresh copy in case it has changed.
@@ -1477,7 +1478,7 @@ class Place {
           // Either .get or .post routes directories (or both) exist.
           this.log('   ⛺    ❨Place❩ Found .get/.post folders. Will load dynamic routes from there.')
           if (httpsGetRoutesDirectoryExists) {
-            loadHttpsGetRoutesFrom(httpsGetRoutesDirectory)
+            await loadHttpsGetRoutesFrom(httpsGetRoutesDirectory)
           }
           if (httpsPostRoutesDirectoryExists) {
             // Load HTTPS POST routes.
@@ -1485,7 +1486,8 @@ class Place {
             addBodyParser()
 
             const httpsPostRoutes = getRoutes(httpsPostRoutesDirectory)
-            httpsPostRoutes.forEach(async route => {
+
+            asyncForEach(httpsPostRoutes, async route => {
               this.log(`   ⛺    ❨Place❩ Adding HTTPS POST route: ${route.path}`)
               this.app.post(route.path, (await import(route.callback)).default)
             })
@@ -1498,7 +1500,7 @@ class Place {
         // ========================================================
         //
 
-        loadHttpsGetRoutesFrom(httpsRoutesDirectory)
+        await loadHttpsGetRoutesFrom(httpsRoutesDirectory)
       }
 
       //
@@ -1533,7 +1535,7 @@ class Place {
         // Either .https or .wss routes directories (or both) exist.
         this.log('   ⛺    ❨Place❩ Found .https/.wss folders. Will load dynamic routes from there.')
         if (httpsRoutesDirectoryExists) {
-          loadHttpsRoutesFrom(httpsRoutesDirectory)
+          await loadHttpsRoutesFrom(httpsRoutesDirectory)
         }
         if (wssRoutesDirectoryExists) {
           // Load WebSocket (WSS) routes.
@@ -1550,7 +1552,7 @@ class Place {
       // Fallback behaviour: routes.js file doesn’t exist and we don’t have
       // separate folders for .https and .wss routes. Attempt to load HTTPS
       // routes from the dynamic routes directory, while applying rules 3 & 4.
-      loadHttpsRoutesFrom(dynamicRoutesDirectory)
+      await loadHttpsRoutesFrom(dynamicRoutesDirectory)
     }
   }
 }
