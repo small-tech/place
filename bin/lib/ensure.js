@@ -5,15 +5,17 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-const childProcess = require('child_process')
-const os = require('os')
-const fs = require('fs-extra')
-const path = require('path')
-const Util = require('../../lib/Util')
-const Place = require('../../index')
-const runtime = require('./runtime')
-const getStatus = require('./status')
-const clr = require('../../lib/clr')
+import childProcess from 'child_process'
+import os from 'os'
+import fs from 'fs-extra'
+import path from 'path'
+import Util from '../../lib/Util.js'
+import Place from '../../index.js'
+import * as runtime from './runtime.js'
+import getStatus from './status.js'
+import clr from '../../lib/clr.js'
+
+const __dirname = new URL('.', import.meta.url).pathname
 
 class Ensure {
 
@@ -237,4 +239,4 @@ class Ensure {
 
 }
 
-module.exports = new Ensure()
+export default new Ensure()

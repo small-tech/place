@@ -6,9 +6,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-const childProcess = require('child_process')
-const status = require('../lib/status')
-const clr = require('../../lib/clr')
+import childProcess from 'child_process'
+import status from '../lib/status.js'
+import clr from '../../lib/clr.js'
 
 function throwError(errorMessage) {
   console.log(`\n   ❌    ${clr('❨Place❩ Error:', 'red')} ${errorMessage}\n`)
@@ -38,4 +38,4 @@ function restart () {
   console.log('\n   🎈    ❨Place❩ Place daemon restarted.\n')
 }
 
-module.exports = restart
+export default restart

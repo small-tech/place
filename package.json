@@ -21,6 +21,7 @@
     "small tech"
   ],
   "main": "index.js",
+  "type": "module",
   "bin": "bin/place",
   "scripts": {
     "build": "node bin/build.js",

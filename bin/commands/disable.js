@@ -12,9 +12,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-const _disable = require('../lib/disable')
-const ensure = require('../lib/ensure')
-const Place = require('../../index')
+import _disable from '../lib/disable'
+import ensure from '../lib/ensure.js'
+import Place from '../../index.js'
 
 function disable () {
   Place.logAppNameAndVersion()
@@ -30,4 +30,4 @@ function disable () {
   }
 }
 
-module.exports = disable
+export default disable

@@ -11,9 +11,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-const _start = require('../lib/start')
-const ensure = require('../lib/ensure')
-const Place = require('../../index')
+import _start from '../lib/start.js'
+import ensure from '../lib/ensure.js'
+import Place from '../../index.js'
 
 function start () {
   Place.logAppNameAndVersion()
@@ -29,4 +29,4 @@ function start () {
   }
 }
 
-module.exports = start
+export default start

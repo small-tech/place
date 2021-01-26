@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const cli = require('./lib/cli')
+import cli from './lib/cli.js'
 
 // While testing elevated privileges on Windows, if you are getting
 // an error and you do not want the window to close before you can
@@ -8,7 +8,7 @@ const cli = require('./lib/cli')
 
 try {
   const {commandPath, args} = cli.initialise(process.argv.slice(2))
-  require(commandPath)(args)
+  ;(await import(commandPath)).default(args)
 } catch (error) {
   console.log(error)
   process.exit(1)

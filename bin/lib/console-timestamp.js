@@ -12,8 +12,8 @@ function execute() {
   console[method].apply(console, args)
 }
 
-module.exports = {
-  error: execute.bind(null, 'error'),
-  log: execute.bind(null, 'log'),
-  info: execute.bind(null, 'info'),
-}
+const error = execute.bind(null, 'error')
+const log = execute.bind(null, 'log')
+const info = execute.bind(null, 'info')
+
+export { error, log, info }

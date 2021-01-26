@@ -12,15 +12,15 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-const os = require('os')
-const fs = require('fs-extra')
-const path = require('path')
-const childProcess = require('child_process')
-const Graceful = require('node-graceful')
-const Util = require('../../lib/Util')
-const RsyncWatcher = require('./RsyncWatcher')
-const ensure = require('./ensure')
-const clr = require('../../lib/clr')
+import os from 'os'
+import fs from 'fs-extra'
+import path from 'path'
+import childProcess from 'child_process'
+import Graceful from 'node-graceful'
+import Util from '../../lib/Util.js'
+import RsyncWatcher from './RsyncWatcher.js'
+import ensure from './ensure.js'
+import clr from '../../lib/clr.js'
 
 
 function sync (options) {
@@ -265,4 +265,4 @@ function sync (options) {
   }
 }
 
-module.exports = sync
+export default sync

@@ -11,11 +11,11 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-const Place = require('../../index.js')
+import Place from '../../index.js'
 
 function version () {
   Place.logAppNameAndVersion()
   process.exit()
 }
 
-module.exports = version
+export default version

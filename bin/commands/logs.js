@@ -13,9 +13,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-const childProcess = require('child_process')
-const Place = require('../../index')
-const ensure = require('../lib/ensure')
+import childProcess from 'child_process'
+import Place from '../../index.js'
+import ensure from '../lib/ensure.js'
 
 function logs () {
   Place.logAppNameAndVersion()
@@ -24,4 +24,4 @@ function logs () {
   childProcess.spawn('journalctl', ['--since', 'today', '--no-pager', '--follow', '--unit', 'place'], {env: process.env, stdio: 'inherit'})
 }
 
-module.exports = logs
+export default logs

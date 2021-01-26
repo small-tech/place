@@ -14,15 +14,16 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-const fs = require('fs')
-const pathModule = require('path')
-const chalk = require('chalk')
-const inquirer = require('inquirer')
-const create = require('../lib/create')
+import fs from 'fs'
+import pathModule from 'path'
+import chalk from 'chalk'
+import inquirer from 'inquirer'
+import create from '../lib/create.js'
+import help from './help.js'
 
 // Note: requires are at the bottom to avoid a circular reference as ../../index (Place)
 // ===== also requires this module.
-// const generateContent = require('../lib/generate-content')
+// import generateContent from '../lib/generate-content'
 
 const DOMAIN = 'domain'
 const ALIASES = 'aliases'
@@ -228,6 +229,7 @@ async function serve (args) {
         }
 
       } catch (error) {
+        console.log(error)
         if (error instanceof errors.InvalidPathToServeError) {
           console.log(`\n   ❌    ${clr(`❨Place❩ Error:`, 'red')} ${error.message}\n`)
           process.exit(1)
@@ -246,7 +248,7 @@ async function serve (args) {
 function syntaxError(message = null) {
   const additionalMessage = message === null ? '' : message
   console.log(`\n   ❌    ${clr('❨Place❩ Syntax error:', 'red')} ${additionalMessage}`)
-  require('./help')()
+  help()
 }
 
 // Throw a general error.
@@ -285,14 +287,14 @@ function ensurePort (port) {
 }
 
 
-module.exports = serve
+export default serve
 
 // Note: requires are at the bottom to avoid a circular reference as ../../index (Place)
 // ===== also requires this module.
 
-const ensure = require('../lib/ensure')
-const status = require('../lib/status')
-const tcpPortUsed = require('tcp-port-used')
-const clr = require('../../lib/clr')
-const errors = require('../../lib/errors')
-const Place = require('../../index')
+import ensure from '../lib/ensure.js'
+import status from '../lib/status.js'
+import tcpPortUsed from 'tcp-port-used'
+import clr from '../../lib/clr.js'
+import errors from '../../lib/errors.js'
+import Place from '../../index.js'

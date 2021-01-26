@@ -8,12 +8,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-const fs                    = require('fs')
-const path                  = require('path')
-const childProcess          = require('child_process')
-const crossPlatformHostname = require('@small-tech/cross-platform-hostname')
+import fs from 'fs'
+import path from 'path'
+import childProcess from 'child_process'
+import crossPlatformHostname from '@small-tech/cross-platform-hostname'
 
-const Place                 = require('../../')
+import Place from '../../index.js'
 
 function status () {
 
@@ -91,4 +91,4 @@ function status () {
   return { isActive, isEnabled, daemonDetails }
 }
 
-module.exports = status
+export default status

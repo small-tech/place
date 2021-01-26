@@ -11,8 +11,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-const ensure = require('../lib/ensure')
-const Help = require('../lib/Help')
+import ensure from '../lib/ensure.js'
+import Help from '../lib/Help.js'
 
 // Platform detection.
 const systemdExists = ensure.commandExists('systemctl')
@@ -28,4 +28,4 @@ function help (args) {
   process.exit()
 }
 
-module.exports = help
+export default help

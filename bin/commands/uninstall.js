@@ -11,19 +11,19 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-const fs = require('fs-extra')
-const path = require('path')
+import fs from 'fs-extra'
+import path from 'path'
 
-const prompts = require('prompts')
-const Graceful = require('node-graceful')
-const actualStringLength = require('string-length')
+import prompts from 'prompts'
+import Graceful from 'node-graceful'
+import actualStringLength from 'string-length'
 
-const ensure = require('../lib/ensure')
-const status = require('../lib/status')
-const disableServer = require('../lib/disable')
+import ensure from '../lib/ensure.js'
+import status from '../lib/status.js'
+import disableServer from '../lib/disable.js'
 
-const Place = require('../../index')
-const clr = require('../../lib/clr')
+import Place from '../../index.js'
+import clr from '../../lib/clr.js'
 
 class WarningBox {
   constructor () {
@@ -173,4 +173,4 @@ async function uninstall (options) {
   }
 }
 
-module.exports = uninstall
+export default uninstall
