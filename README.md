@@ -16,9 +16,10 @@ Place is a hard fork of [Site.js](https://sitejs.org).
 
 ## Notes
 
-  - Refactored to use ECMAScript Modules (esm) (Tue, Jan 26, 2021). __Might have issues.__
+  - Refactored to use ECMAScript Modules (esm) (Tue, Jan 26, 2021).
   - Due to move to esm will require Node 14.x+
   - Issue: (esm) JSDB imports fail unless a package.json file is placed in the database directory (workaround) or until JSDB is updated to implement this workaround automatically or to use ESM modules. TODO: [] Open issue in JSDB.
+  - Issue: (esm) Place requires a `package.json` with `type="module"` set or Snowpack crashes due to its use of `require`. (What a mess CommonJS/ESM interop is in Node.js!) See: https://github.com/snowpackjs/snowpack/discussions/2510
   - Binary builds are currently broken. Run `node bin/place` to test.
   - Basic Snowpack support added. (Fri, Jan 15, 2021)
   - Basic Svelte support added. (Fri, Jan 15, 2021)
