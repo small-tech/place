@@ -11,6 +11,7 @@ module.exports = {
   mount: {
     /* ... */
   },
+  exclude: ['.git/**', '*sodiumnative*'],
   plugins: [
     ['@snowpack/plugin-svelte', {
       input: ['.interface', '.svelte']
@@ -24,7 +25,7 @@ module.exports = {
         {
           name: 'place.small-web.org:inject-svelte',
           resolveId(id) {
-            console.log('resolving id', id)
+            // console.log('resolving id', id)
             const svelteBasePath = path.join(__dirname, 'node_modules', 'svelte')
             const sveltePath = path.join(svelteBasePath, 'index.mjs')
             const svelteInternalPath = path.join(svelteBasePath, 'internal', 'index.mjs')
@@ -49,5 +50,10 @@ module.exports = {
   },
   buildOptions: {
     /* ... */
+  },
+  optimize: {
+    bundle: true,
+    minify: true,
+    target: 'es2018',
   },
 }

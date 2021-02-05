@@ -88,12 +88,13 @@
     "session25519": "github:aral/session25519",
     "snowpack": "file:../../forks/snowflake/snowpack",
     "string-length": "^3.1.0",
-    "svelte": "^3.31.2",
+    "svelte": "^3.32.1",
     "svelte-hmr": "^0.12.4",
     "tar-stream": "^2.1.4",
     "tcp-port-used": "^1.0.1"
   },
   "devDependencies": {
+    "esbuild": "^0.8.39",
     "nexe": "https://github.com/aral/nexe#dependency-updates",
     "nyc": "^15.1.0",
     "tap-nyc": "^1.0.3",
