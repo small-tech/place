@@ -69,7 +69,6 @@
     "cliui": "^7.0.4",
     "concat-stream": "^2.0.0",
     "debounce": "^1.2.0",
-    "decache": "^4.5.1",
     "eff-diceware-passphrase": "^3.0.0",
     "express": "^4.17.1",
     "fs-extra": "^8.1.0",
