@@ -7,11 +7,11 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-const fs = require('fs')
-const childProcess = require('child_process')
-const status = require('../lib/status')
-const Place = require('../../')
-const clr = require('../../lib/clr')
+import fs from 'fs'
+import childProcess from 'child_process'
+import status from '../lib/status.js'
+import Place from '../../index.js'
+import clr from '../../lib/clr.js'
 
 function throwError(errorMessage) {
   console.log(`\n   ❌    ${clr('❨Place❩ Error:', 'red')} ${errorMessage}\n`)
@@ -45,4 +45,4 @@ function disable () {
   console.log('\n   🎈    ❨Place❩ Place daemon stopped and removed from startup.\n')
 }
 
-module.exports = disable
+export default disable

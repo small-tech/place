@@ -18,16 +18,23 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
-const fs              = require('fs-extra')
-const path            = require('path')
-const os              = require('os')
-const childProcess    = require('child_process')
-const { compile }     = require('nexe')
-const minimist        = require('minimist')
-const package         = require('../package.json')
-const moment          = require('moment')
+import fs from 'fs-extra'
+import path from 'path'
+import os from 'os'
+import childProcess from 'child_process'
+import { compile } from 'nexe'
+import minimist from 'minimist'
+import moment from 'moment'
+import Util from '../lib/Util.js'
+
 const cpuArchitecture = os.arch()
-const Util            = require('../lib/Util')
+
+// For compatibility with legacy CommonJS code.
+import { createRequire } from 'module'
+const __dirname = new URL('.', import.meta.url).pathname
+const require = createRequire(import.meta.url)
+
+const package = require('../package.json')
 
 // Parse the command-line arguments.
 const commandLineOptions = minimist(process.argv.slice(2), {boolean: true})

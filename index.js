@@ -12,38 +12,45 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-const fs                        = require('fs-extra')
-const path                      = require('path')
-const os                        = require('os')
-const EventEmitter              = require('events')
-const childProcess              = require('child_process')
-const http                      = require('http')
-const https                     = require('@small-tech/https')
-const expressWebSocket          = require('@small-tech/express-ws')
-// const instant                   = require('@small-tech/instant')
-const crossPlatformHostname     = require('@small-tech/cross-platform-hostname')
-const getRoutes                 = require('@small-tech/web-routes-from-files')
-const JSDB                      = require('@small-tech/jsdb')
-const Graceful                  = require('node-graceful')
-const express                   = require('express')
-const bodyParser                = require('body-parser')
-const helmet                    = require('helmet')
-const enableDestroy             = require('server-destroy')
-const moment                    = require('moment')
-const morgan                    = require('morgan')
-const chokidar                  = require('chokidar')
-const decache                   = require('decache')
-const prepareRequest            = require('bent')
-const NodeGitServer             = require('node-git-server')
-const clr                       = require('./lib/clr')
-const cli                       = require('./bin/lib/cli')
-const Stats                     = require('./lib/Stats')
-const asyncForEach              = require('./lib/async-foreach')
-const errors                    = require('./lib/errors')
-const Util                      = require('./lib/Util')
-const chalk                     = require('chalk')
+import fs from 'fs-extra'
+import path from 'path'
+import os from 'os'
+import EventEmitter from 'events'
+import childProcess from 'child_process'
+import http from 'http'
 
-const snowpack                  = require('snowpack')
+import Graceful from 'node-graceful'
+import express from 'express'
+import bodyParser from 'body-parser'
+import helmet from 'helmet'
+import enableDestroy from 'server-destroy'
+import moment from 'moment'
+import morgan from 'morgan'
+import chokidar from 'chokidar'
+import prepareRequest from 'bent'
+import NodeGitServer from 'node-git-server'
+import chalk from 'chalk'
+
+import https from '@small-tech/https'
+import expressWebSocket from '@small-tech/express-ws'
+// import instant from '@small-tech/instant'
+import crossPlatformHostname from '@small-tech/cross-platform-hostname'
+import getRoutes from '@small-tech/web-routes-from-files'
+import JSDB from '@small-tech/jsdb'
+
+import clr from './lib/clr.js'
+import cli from './bin/lib/cli.js'
+import Stats from './lib/Stats.js'
+import asyncForEach from './lib/async-foreach.js'
+import errors from './lib/errors.js'
+import Util from './lib/Util.js'
+
+import snowpack from 'snowpack'
+
+// For compatibility with legacy CommonJS code.
+import { createRequire } from 'module'
+const __dirname = new URL('.', import.meta.url).pathname
+const require = createRequire(import.meta.url)
 
 class Place {
 
@@ -70,7 +77,7 @@ class Place {
 
   static readAndCacheManifest () {
     try {
-      this.#manifest = JSON.parse(fs.readFileSync(path.join(__dirname, 'manifest.json'), 'utf-8'))
+      this.#manifest = JSON.parse(fs.readFileSync(new URL('manifest.json', import.meta.url), 'utf-8'))
     } catch (error) {
       // When running under Node (not wrapped as a binary), there will be no manifest file. So mock one.
       const options = {shell: os.platform() === 'win32' ? 'powershell' : '/bin/bash', env: process.env}
@@ -337,7 +344,7 @@ class Place {
   async configureApp () {
     this.startAppConfiguration()
     await this.configureAppRoutes()
-    this.endAppConfiguration()
+    await this.endAppConfiguration()
   }
 
 
@@ -606,6 +613,7 @@ class Place {
   // Middleware and routes that might (in the future) include an async generation step.
   // TODO: Refactor accordingly if we don’t end up using this.
   async configureAppRoutes () {
+
     let statusOfPathToServe
     try {
       statusOfPathToServe = fs.statSync(this.absolutePathToServe)
@@ -625,10 +633,10 @@ class Place {
     // await this.addHugoSupport()
 
     // Inject Snowpack for ESM-based workflow.
-    const snowpackConfigurationFilePath = path.join(__dirname, 'snowpack.config.js')
+    const snowpackConfigurationFilePath = path.join(__dirname, 'snowpack.config.cjs')
     const snowpackConfiguration = await snowpack.loadConfiguration({}, snowpackConfigurationFilePath)
     snowpackConfiguration.cwd = this.absolutePathToServe
-    console.log(snowpackConfiguration)
+    // console.log(snowpackConfiguration)
     this.snowpackServer = await snowpack.startServer({
       config: snowpackConfiguration,
       lockfile: null
@@ -652,6 +660,10 @@ class Place {
       }
     })
 
+    await this.appAddDynamicRoutes()
+    this.appAddStaticRoutes()
+    this.appAddWildcardRoutes()
+
     // Continue configuring the rest of the app routes.
     this.addCustomErrorPagesSupport()
 
@@ -659,10 +671,6 @@ class Place {
 
     this.addPublicKeysRoute()
     this.appAddGitRoutes()
-
-    this.appAddDynamicRoutes()
-    this.appAddStaticRoutes()
-    this.appAddWildcardRoutes()
   }
 
   // Creates a web socket server.
@@ -730,7 +738,7 @@ class Place {
 
   // Finish configuring the app. These are the routes that come at the end.
   // (We need to add the WebSocket (WSS) routes after the server has been created).
-  endAppConfiguration () {
+  async endAppConfiguration () {
     // Create the file watcher to watch for changes on dynamic and wildcard routes.
     this.createFileWatcher()
 
@@ -738,18 +746,23 @@ class Place {
     if (this.routesJsFile !== undefined) {
       this.createWebSocketServer()
       const routesJSFilePath = path.resolve(this.routesJsFile)
-      decache(routesJSFilePath)
-      require(routesJSFilePath)(this.app)
+      // decache(routesJSFilePath)
+      // Ensure we are loading a fresh copy in case it has changed.
+      const cacheBustingRoutesJSFilePath = `${routesJSFilePath}?update=${Date.now()}`
+      ;(await import(cacheBustingRoutesJSFilePath)).default(this.app)
     }
 
     // If there are WebSocket routes, create a regular WebSocket server and
     // add the WebSocket routes (if any) to the app.
     if (this.wssRoutes !== undefined) {
       this.createWebSocketServer()
-      this.wssRoutes.forEach(route => {
+
+      await asyncForEach(this.wssRoutes, async route => {
         this.log(`   ⛺    ❨Place❩ Adding WebSocket (WSS) route: ${route.path}`)
-        decache(route.callback)
-        this.app.ws(route.path, require(route.callback))
+        // decache(route.callback)
+        // Ensure we are loading a fresh copy in case it has changed.
+        const cacheBustingRouteCallback = `${route.callback}?update=${Date.now()}`
+        this.app.ws(route.path, (await import(cacheBustingRouteCallback)).default)
       })
     }
 
@@ -1412,7 +1425,7 @@ class Place {
   //
   // For full details, please see the readme file.
 
-  appAddDynamicRoutes () {
+  async appAddDynamicRoutes () {
     // Initially check if a dynamic routes directory exists. If it does not,
     // we don’t need to take this any further.
     const dynamicRoutesDirectory = path.join(this.pathToServe, '.dynamic')
@@ -1425,17 +1438,19 @@ class Place {
 
       // Attempts to load HTTPS routes from the passed directory,
       // adhering to rules 3 & 4.
-      const loadHttpsRoutesFrom = (httpsRoutesDirectory) => {
+      const loadHttpsRoutesFrom = async (httpsRoutesDirectory) => {
         // Attempts to load HTTPS GET routes from the passed directory.
-        const loadHttpsGetRoutesFrom = (httpsGetRoutesDirectory) => {
+        const loadHttpsGetRoutesFrom = async (httpsGetRoutesDirectory) => {
           const httpsGetRoutes = getRoutes(httpsGetRoutesDirectory)
-          httpsGetRoutes.forEach(route => {
+
+          await asyncForEach(httpsGetRoutes, async route => {
             this.log(`   ⛺    ❨Place❩ Adding HTTPS GET route: ${route.path}`)
 
             // Ensure we are loading a fresh copy in case it has changed.
-            decache(route.callback)
+            const cacheBustingRouteCallback = `${route.callback}?update=${Date.now()}`
+            // decache(route.callback)
             try {
-              this.app.get(route.path, require(route.callback))
+              this.app.get(route.path, (await import(cacheBustingRouteCallback)).default)
             } catch (error) {
               if (error.message.includes('requires a callback function but got a [object Object]')) {
                 console.log(`\n   ❌    ${clr('❨Place❩ Error:', 'red')} Could not find callback in route ${route.path}\n\n         ❨Place❩ ${clr('Hint:', 'green')} Make sure your DotJS routes include a ${clr('module.exports = (request, response) => {}', 'cyan')} declaration.\n`)
@@ -1462,7 +1477,7 @@ class Place {
           // Either .get or .post routes directories (or both) exist.
           this.log('   ⛺    ❨Place❩ Found .get/.post folders. Will load dynamic routes from there.')
           if (httpsGetRoutesDirectoryExists) {
-            loadHttpsGetRoutesFrom(httpsGetRoutesDirectory)
+            await loadHttpsGetRoutesFrom(httpsGetRoutesDirectory)
           }
           if (httpsPostRoutesDirectoryExists) {
             // Load HTTPS POST routes.
@@ -1470,9 +1485,10 @@ class Place {
             addBodyParser()
 
             const httpsPostRoutes = getRoutes(httpsPostRoutesDirectory)
-            httpsPostRoutes.forEach(route => {
+
+            asyncForEach(httpsPostRoutes, async route => {
               this.log(`   ⛺    ❨Place❩ Adding HTTPS POST route: ${route.path}`)
-              this.app.post(route.path, require(route.callback))
+              this.app.post(route.path, (await import(route.callback)).default)
             })
           }
           return
@@ -1483,7 +1499,7 @@ class Place {
         // ========================================================
         //
 
-        loadHttpsGetRoutesFrom(httpsRoutesDirectory)
+        await loadHttpsGetRoutesFrom(httpsRoutesDirectory)
       }
 
       //
@@ -1518,7 +1534,7 @@ class Place {
         // Either .https or .wss routes directories (or both) exist.
         this.log('   ⛺    ❨Place❩ Found .https/.wss folders. Will load dynamic routes from there.')
         if (httpsRoutesDirectoryExists) {
-          loadHttpsRoutesFrom(httpsRoutesDirectory)
+          await loadHttpsRoutesFrom(httpsRoutesDirectory)
         }
         if (wssRoutesDirectoryExists) {
           // Load WebSocket (WSS) routes.
@@ -1535,9 +1551,9 @@ class Place {
       // Fallback behaviour: routes.js file doesn’t exist and we don’t have
       // separate folders for .https and .wss routes. Attempt to load HTTPS
       // routes from the dynamic routes directory, while applying rules 3 & 4.
-      loadHttpsRoutesFrom(dynamicRoutesDirectory)
+      await loadHttpsRoutesFrom(dynamicRoutesDirectory)
     }
   }
 }
 
-module.exports = Place
+export default Place

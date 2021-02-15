@@ -13,11 +13,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-const Place = require('../../index')
-const getStatus = require('../lib/status')
-const clr = require('../../lib/clr')
-const crossPlatformHostname = require('@small-tech/cross-platform-hostname')
-const ensure = require('../lib/ensure')
+import crossPlatformHostname from '@small-tech/cross-platform-hostname'
+
+import Place from '../../index.js'
+import getStatus from '../lib/status.js'
+import clr from '../../lib/clr.js'
+import ensure from '../lib/ensure.js'
 
 function status () {
   Place.logAppNameAndVersion()
@@ -71,4 +72,4 @@ function status () {
   console.log('')
 }
 
-module.exports = status
+export default status

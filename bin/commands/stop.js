@@ -11,9 +11,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-const _stop = require('../lib/stop')
-const ensure = require('../lib/ensure')
-const Place = require('../../index')
+import _stop from '../lib/stop.js'
+import ensure from '../lib/ensure.js'
+import Place from '../../index.js'
 
 function stop () {
   Place.logAppNameAndVersion()
@@ -30,4 +30,4 @@ function stop () {
   }
 }
 
-module.exports = stop
+export default stop

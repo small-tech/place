@@ -6,10 +6,10 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-const childProcess = require('child_process')
+import childProcess from 'child_process'
 
-const status = require('../lib/status')
-const clr = require('../../lib/clr')
+import status from '../lib/status.js'
+import clr from '../../lib/clr.js'
 
 function throwError(errorMessage) {
   console.log(`\n   ❌    ${clr('❨Place❩ Error:', 'red')} ${errorMessage}\n`)
@@ -35,4 +35,4 @@ function stop () {
   console.log('\n   🎈    ❨Place❩ Place daemon stopped.\n')
 }
 
-module.exports = stop
+export default stop

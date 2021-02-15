@@ -4,7 +4,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-const minimist = require('minimist')
+import minimist from 'minimist'
 
 class CommandLineInterface {
 
@@ -62,7 +62,7 @@ class CommandLineInterface {
     const commandNamedArguments = options
 
     // Note that this is included from bin/place and the path is relative to that script.
-    const commandPath = `./commands/${commandName}`
+    const commandPath = `./commands/${commandName}.js`
 
     return {commandPath, args: {
       positional: commandPositionalArguments,
@@ -71,4 +71,4 @@ class CommandLineInterface {
   }
 }
 
-module.exports = new CommandLineInterface()
+export default new CommandLineInterface()

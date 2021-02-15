@@ -16,20 +16,22 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-const os = require('os')
-const fs = require('fs')
-const path = require('path')
-const childProcess = require('child_process')
+import os from 'os'
+import fs from 'fs'
+import path from 'path'
+import childProcess from 'child_process'
 
-const tcpPortUsed = require('tcp-port-used')
+import tcpPortUsed from 'tcp-port-used'
 
-const runtime = require('../lib/runtime')
-const ensure = require('../lib/ensure')
-const clr = require('../../lib/clr')
+import runtime from '../lib/runtime.js'
+import ensure from '../lib/ensure.js'
+import clr from '../../lib/clr.js'
 
-const Util = require('../../lib/Util')
+import Util from '../../lib/Util.js'
 
-const Place = require('../../index')
+import Place from '../../index.js'
+
+const __dirname = new URL('.', import.meta.url).pathname
 
 function enable (args) {
   Place.logAppNameAndVersion()
@@ -292,4 +294,4 @@ function disableInsecureRsyncDaemon() {
   }
 }
 
-module.exports = enable
+export default enable

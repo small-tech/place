@@ -12,12 +12,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-const path = require('path')
+import path from 'path'
 
-const Place = require('../../index')
-const sync = require('../lib/sync')
-// const generateContent = require('../lib/generate-content')
-const clr = require('../../lib/clr')
+import Place from '../../index.js'
+import sync from '../lib/sync.js'
+// import generateContent from '../lib/generate-content.js'
+import clr from '../../lib/clr.js'
 
 function push (args) {
   // Make sure the local path ends with the path separator so that the contents of the folder
@@ -65,4 +65,4 @@ function push (args) {
   })()
 }
 
-module.exports = push
+export default push

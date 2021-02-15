@@ -9,20 +9,22 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-const test = require('tape')
+import test from 'tape'
 
-const Place = require('../index.js')
-const http = require('http')
-const https = require('https')
+import Place from '../index.js'
+import http from 'http'
+import https from 'https'
 
-const fs = require('fs-extra')
-const path = require('path')
+import fs from 'fs-extra'
+import path from 'path'
 
-const queryString = require('querystring')
+import queryString from 'querystring'
 
-const WebSocket = require('ws')
+import WebSocket from 'ws'
 
 process.env['QUIET'] = true
+
+const __dirname = new URL('.', import.meta.url).pathname
 
 function localhost(path) {
   return `https://localhost${path}`

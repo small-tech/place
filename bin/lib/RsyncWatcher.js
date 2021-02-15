@@ -13,16 +13,17 @@
 // This version modified by: Aral Balkan and licensed under AGPLv3 or later.
 //
 ////////////////////////////////////////////////////////////////////////////////
+import path from 'path'
+import { EventEmitter } from 'events'
 
-const chokidar = require('chokidar')
-const Rsync = require('@small-tech/rsync-with-portable-cygwin-path-support-on-windows')
-const debounce = require('debounce')
-const path = require('path')
-const Graceful = require('node-graceful')
-const clr = require('../../lib/clr')
-const { EventEmitter } = require('events')
+import chokidar from 'chokidar'
+import debounce from 'debounce'
+import Graceful from 'node-graceful'
 
-const consoleTimestamp = require('./console-timestamp')
+import Rsync from '@small-tech/rsync-with-portable-cygwin-path-support-on-windows'
+
+import clr from '../../lib/clr.js'
+import consoleTimestamp from './console-timestamp.js'
 
 class RSyncWatcher extends EventEmitter {
 
@@ -207,4 +208,4 @@ class RSyncWatcher extends EventEmitter {
   }
 }
 
-module.exports = RSyncWatcher
+export default RSyncWatcher

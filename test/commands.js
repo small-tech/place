@@ -18,16 +18,18 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-const os = require('os')
-const fs = require('fs-extra')
-const test = require('tape')
-const childProcess = require('child_process')
-const path = require('path')
-const Place = require('../index.js')
-const Help = require('../bin/lib/Help')
-const ensure = require('../bin/lib/ensure')
+import os from 'os'
+import fs from 'fs-extra'
+import test from 'tape'
+import childProcess from 'child_process'
+import path from 'path'
+import Place from '../index.js'
+import Help from '../bin/lib/Help'
+import ensure from '../bin/lib/ensure'
 
 process.env['QUIET'] = true
+
+const __dirname = new URL('.', import.meta.url).pathname
 
 async function secureGet (url) {
   return new Promise((resolve, reject) => {

@@ -4,9 +4,10 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-const Place = require('../../index')
-const clr = require('../../lib/clr')
-const interfaceEngine = require('cliui')
+import interfaceEngine from 'cliui'
+
+import Place from '../../index.js'
+import clr from '../../lib/clr.js'
 
 const GREEN = 'green'
 const YELLOW = 'yellow'
@@ -310,4 +311,4 @@ class Help {
   }
 }
 
-module.exports = Help
+export default Help

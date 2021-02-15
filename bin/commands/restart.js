@@ -11,9 +11,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-const _restart = require('../lib/restart')
-const ensure = require('../lib/ensure')
-const Place = require('../../index')
+import _restart from '../lib/restart.js'
+import ensure from '../lib/ensure.js'
+import Place from '../../index.js'
 
 function restart () {
   Place.logAppNameAndVersion()
@@ -29,4 +29,4 @@ function restart () {
   }
 }
 
-module.exports = restart
+export default restart

@@ -11,17 +11,17 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-const Place = require('../../index')
-const inquirer = require('inquirer')
-const ora = require('ora')
-const os = require('os')
-const fs = require('fs-extra')
-const path = require('path')
-const chalk = require('chalk')
-const git = require('isomorphic-git')
-const generateEFFDicewarePassphrase = require('eff-diceware-passphrase')
-const session25519 = require('session25519')
-const crypto = require('crypto')
+import Place from '../../index.js'
+import inquirer from 'inquirer'
+import ora from 'ora'
+import os from 'os'
+import fs from 'fs-extra'
+import path from 'path'
+import chalk from 'chalk'
+import git from 'isomorphic-git'
+import generateEFFDicewarePassphrase from 'eff-diceware-passphrase'
+import session25519 from 'session25519'
+import crypto from 'crypto'
 
 async function create (args) {
 
@@ -270,7 +270,7 @@ async function create (args) {
   spinner.stopAndPersist({ symbol: ' ✔️ ', text: 'Source code repository initialised.' })
 }
 
-module.exports = create
+export default create
 
 //
 // Private

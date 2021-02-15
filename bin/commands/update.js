@@ -11,22 +11,22 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-const https = require('https')
-const os = require('os')
-const fs = require('fs')
-const path = require('path')
-const { Readable } = require('stream')
+import https from 'https'
+import os from 'os'
+import fs from 'fs'
+import path from 'path'
+import { Readable } from 'stream'
 
-const tar = require('tar-stream')
-const gunzip = require('gunzip-maybe')
-const concat = require('concat-stream')
+import tar from 'tar-stream'
+import gunzip from 'gunzip-maybe'
+import concat from 'concat-stream'
 
-const Site = require('../../index')
-const ensure = require('../lib/ensure')
-const status = require('../lib/status')
-const restart = require('../lib/restart')
+import Place from '../../index.js'
+import ensure from '../lib/ensure.js'
+import status from '../lib/status.js'
+import restart from '../lib/restart.js'
 
-const clr = require('../../lib/clr')
+import clr from '../../lib/clr'
 
 async function update () {
   const platform = os.platform()
@@ -162,7 +162,7 @@ async function update () {
   return
 }
 
-module.exports = update
+export default update
 
 //
 // Helpers.
