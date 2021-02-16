@@ -93,12 +93,10 @@
     "tcp-port-used": "^1.0.1"
   },
   "devDependencies": {
-    "esbuild": "^0.8.39",
     "nexe": "https://github.com/aral/nexe#dependency-updates",
     "nyc": "^15.1.0",
     "tap-nyc": "^1.0.3",
     "tap-spec": "https://github.com/small-tech/tap-spec",
-    "tape": "^5.0.1",
-    "ws": "^7.1.1"
+    "tape": "^5.0.1"
   }
 }
