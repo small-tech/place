@@ -1,3 +1,4 @@
+import Place from '../../index.js'
 import sodiumPlus from 'sodium-plus'
 const { SodiumPlus, X25519PublicKey } = sodiumPlus
 import tweetnaclUtil from 'tweetnacl-util'
@@ -22,7 +23,8 @@ let sodium
 // In this spike, I’m hard-coding the public encryption key.
 // Normally, we would read it in from the place’s configuration.
 // (This spike will eventually be integrated into Place itself.)
-const publicEncryptionKey = new X25519PublicKey(Buffer.from('101e27f87e7b2529154fbc9828d552b829ae7d0bd9b3d64c4f435b79f4481048', 'hex'))
+console.log(`>${Place.publicKeys.encryption}<`)
+const publicEncryptionKey = new X25519PublicKey(Buffer.from(Place.publicKeys.encryption, 'hex'))
 
 export default async (request, response) => {
   // Initialise Sodium Plus if necessary.

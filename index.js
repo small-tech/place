@@ -317,6 +317,20 @@ class Place {
     // Also save a copy of the options.
     this.options = options
 
+    // Read in public keys.
+    const placeFullPath = path.resolve(this.pathToServe)
+    const placeName = placeFullPath.slice(placeFullPath.lastIndexOf(path.sep) + 1)
+    const placeDataPath = path.join(Place.settingsDirectory, placeName)
+
+    const placeKeysPath = path.join(placeDataPath, 'public-keys.json')
+
+    if (!fs.existsSync(placeKeysPath)) {
+      this.log(`\n   ❌    ${clr('❨Place❩ Error:', 'red')} Place keys file does not exist at ${placeKeysPath}. Have you run place create?\n`)
+      process.exit(1)
+    }
+
+    Place.publicKeys = JSON.parse(fs.readFileSync(placeKeysPath, 'utf-8'))
+
     //
     // Create the Express app. We will configure it later.
     //
@@ -1091,22 +1105,9 @@ class Place {
   // Add keys route
   addPublicKeysRoute () {
     // TODO: Refactor; remove redundancy with appAddGitRoutes()
-    const placeFullPath = path.resolve(this.pathToServe)
-    const placeName = placeFullPath.slice(placeFullPath.lastIndexOf(path.sep) + 1)
-    const placeDataPath = path.join(Place.settingsDirectory, placeName)
-
-    const placeKeysPath = path.join(placeDataPath, 'public-keys.json')
-
-    if (!fs.existsSync(placeKeysPath)) {
-      this.log(`\n   ❌    ${clr('❨Place❩ Error:', 'red')} Place keys file does not exist at ${placeKeysPath}. Have you run place create?\n`)
-      process.exit(1)
-    }
-
-    const publicKeys = JSON.parse(fs.readFileSync(placeKeysPath, 'utf-8'))
-
     this.app.use((request, response, next) => {
       if (request.path === '/keys') {
-        response.json(publicKeys)
+        response.json(Place.publicKeys)
       } else {
         next()
       }
