@@ -286,6 +286,7 @@ class Place {
 
     // It is a common mistake to start the server in a .dynamic folder (or subfolder), etc.
     // In these cases, try to recover and do the right thing.
+    // TODO: No longer necessary. Remove []
     const {pathToServe, absolutePathToServe} = Util.magicallyRewritePathToServeIfNecessary(options.path, _pathToServe)
 
     this.pathToServe = pathToServe
@@ -298,6 +299,8 @@ class Place {
     this.skipDomainReachabilityCheck = options.skipDomainReachabilityCheck
     this.accessLogErrorsOnly = options.accessLogErrorsOnly
     this.accessLogDisable = options.accessLogDisable
+
+    Place.pathToServe = pathToServe
 
     if (this.skipDomainReachabilityCheck) {
       this.log(`   ⚠     ${clr('❨Place❩ Domain reachability pre-flight check is disabled.', 'yellow')}`)

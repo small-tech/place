@@ -23,7 +23,6 @@ let sodium
 // In this spike, I’m hard-coding the public encryption key.
 // Normally, we would read it in from the place’s configuration.
 // (This spike will eventually be integrated into Place itself.)
-console.log(`>${Place.publicKeys.encryption}<`)
 const publicEncryptionKey = new X25519PublicKey(Buffer.from(Place.publicKeys.encryption, 'hex'))
 
 export default async (request, response) => {
