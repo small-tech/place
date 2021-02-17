@@ -1,6 +1,6 @@
 # ⛺ Place
 
-## A tool for building your own Small Web place.
+## A Small Web Protocol Server
 
 ```
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -14,24 +14,45 @@
 
 Place is a hard fork of [Site.js](https://sitejs.org).
 
-## Notes
+## Implementation notes / todos
 
   - Refactored to use ECMAScript Modules (esm) (Tue, Jan 26, 2021).
   - Due to move to esm will require Node 14.x+
-  - Issue: (esm) JSDB imports fail unless a package.json file is placed in the database directory (workaround) or until JSDB is updated to implement this workaround automatically or to use ESM modules. TODO: [] Open issue in JSDB.
-  - Issue: (esm) Place requires a `package.json` with `type="module"` set or Snowpack crashes due to its use of `require`. (What a mess CommonJS/ESM interop is in Node.js!) See: https://github.com/snowpackjs/snowpack/discussions/2510
-  - Binary builds are currently broken. Run `node bin/place` to test.
-  - Basic Snowpack support added. (Fri, Jan 15, 2021)
-  - Basic Svelte support added. (Fri, Jan 15, 2021)
-  - FIXME: TLS support for the Snowpack server currently requires that you copy the public and private TLS keys to the directory of the place you’re serving. [Opened discussion here](https://github.com/snowpackjs/snowpack/discussions/2325). __Update:__ Added to my Snowpack fork but not implemented in Place yet.
-  - Fixed: Svelte support currently requires that you install `svelte` and `svelte-hmr` in the place that you’re creating. This seems to be an issue with the way plugins are loaded (we’re using the `@snowpack/plugin-svelte`) when Snowpack is [used as middleware](https://www.snowpack.dev/guides/server-side-render#option-2%3A-on-demand-serving-(middleware)). There are two issues to open here:
-      1. Module not found when specifying plugins in a custom server. (e.g., with `@snowpack/plugin-svelte`)
-      2. If you work around the first issue by passing, e.g., `path.join(__dirname, '@snowpack', 'plugin-svelte')`, the modules required by the plugin itself are not found unless they are installed in the folder you are serving (even if they are installed in the folder that your server is running from).
-  - Fixed: Snowpack + plugin-svelte issue: if you use a custom name for svelte files (e.g., `.interface`), imports of Svelte components within Svelte files are not picked up unless you either add them to `packageOptions.knownEntrypoints` or you import them _in the JavaScript file also_. This is not an issue if you use the default `.svelte` extension which leads me to believe that this extension is hardcoded in the plugin. TODO: Open an issue.
+  - Will no longer be shipped as a single binary (but the experience of installing it will remain the same). This will free us from our dependence on Nexe and will mean we can easily adopt and support the latest Node.js LTS. Binary builds and related functionality will be removed. Run `node bin/place.js <path to your small web client>` to test.
+  - TODO: current authentication implementation is hardcoded to the test domain used in the sign in spike. Generalise/fix.
 
-    Tracking [in this dicussion](https://github.com/snowpackjs/snowpack/discussions/2327).
+Note that, unlike the generic behaviour of Site.js, the server routes of Place are hardcoded and only serve the small web protocols. You can create the client for a small web place using any tools you like as long as they output to a static single-page app (SPA) that conforms to the small web protocols.
+
+## Small Web Protocol notes/draft
+
+### General
+
+  - MUST be free and open source (and released under a “share alike” license, e.g., AGPLv3 or later)
+
+  - The client MUST be a single page web app that contains source code only (no data). This is so that we can use out-of-band verification (e.g., a browser extension) to verify that the downloaded web app is what we expect it to be (integrity verification). All other resources included MUST use subresource integrity and any dynamically imported code MUST be signed by a trusted person.
+
+  - The client MUST, on first use, generate with at least 100 bits of entropy a single DiceWare passphrase. From this passphrase it MUST derive via cryptographically secure means all other key material, including the Ed25519 signing keys, the Curve25519 encryption keys, and the SSH keys.
+
+  - The server hosting a Small Web place MUST have the root account disabled, have one account set up for the owner of the server and permit access only via SSH. The server MUST NEVER come into possession of the owner’s private key material. (The server is untrusted.)
+
+### URL conventions
+
+The following URLs are reserved and have special meaning.
+
+#### Server
+
+  - `/keys`: (GET) your public Ed25519 signing key and X25519 encryption key. Together, these keys form the identity of your small web place.
+  - `/private-token`: (GET) returns a private token (“Bernstein token”) – a cryptographically random 32-byte value that is encrypted with the person’s public X25519 encryption key. (TODO: Rename route to private-token in implementation; currently is private-socket).
+  - `/private/:token`: (WSS) a secyre web socket route for exchange of private data between server and client. `:token` is a random 32-byte value as returned from the `/private-token` route (the person MUST decrypt the encrypted Bernstein token returned in order to successfully authenticate and connect to the private websocket route within a specified timeout period – currently 60 seconds in the implementation).
+#### Client
+
+  - `/#/private`: the section of a place accessible only to the owner (the person who holds the private key).
+
+Note: The small web protocols are evolving here, alongside the Place (the reference small web protocol server), and will eventually be moved out to [their own repository](https://source.small-tech.org/small-web/protocols).
 
 ## Creating a new place
+
+__NOTE: These instructions/process is outdated. New instructions will be added once a new process has been created.__
 
 1. Create a folder with the name of your place’s domain:
 
@@ -51,7 +72,7 @@ To server an existing place, just run step 2. (If you’re already in the direct
 
 The goal of Site.js was to create a server that could run all our current sites at [Small Technology Foundation](https://small-tech.org) and to thus create a solid base of a self-updating, zero-maintenance, single-tenant web server.
 
-Place jettisons some of the generic web-related functionality (e.g., static site generation via Hugo, etc.) in Site.js and reimagines other features (routing, data exchange, workflows, etc.) to implement a tool specifically for [Small Web](https://small-tech.org/research-and-development) development.
+Place jettisons some of the generic web-related functionality (e.g., static site generation via Hugo, etc.) in Site.js and focuses on being a [Small Web](https://small-tech.org/research-and-development) Protocol Server.
 
 Read: [What is the Small Web?](https://ar.al/2020/08/07/what-is-the-small-web/)
 

@@ -2,9 +2,9 @@
 //
 // ⛺ Place
 //
-// A Small Web tool.
+// Small Web Protocol Server.
 //
-// Copyright ⓒ 2019-2020 Aral Balkan. Licensed under AGPLv3 or later.
+// Copyright ⓒ 2021 Aral Balkan. Licensed under AGPLv3 or later.
 // Shared with ♥ by the Small Technology Foundation.
 //
 // Like this? Fund us!
@@ -44,8 +44,6 @@ import Stats from './lib/Stats.js'
 import asyncForEach from './lib/async-foreach.js'
 import errors from './lib/errors.js'
 import Util from './lib/Util.js'
-
-import snowpack from 'snowpack'
 
 // For compatibility with legacy CommonJS code.
 import { createRequire } from 'module'
@@ -631,35 +629,6 @@ class Place {
 
     // Async
     // await this.addHugoSupport()
-
-    // Inject Snowpack for ESM-based workflow.
-    const snowpackConfigurationFilePath = path.join(__dirname, 'snowpack.config.cjs')
-    const snowpackConfiguration = await snowpack.loadConfiguration({}, snowpackConfigurationFilePath)
-    snowpackConfiguration.cwd = this.absolutePathToServe
-    // console.log(snowpackConfiguration)
-    this.snowpackServer = await snowpack.startServer({
-      config: snowpackConfiguration,
-      lockfile: null
-    })
-
-    this.app.use(async (request, response, next) => {
-      try {
-        const buildResult = await this.snowpackServer.loadUrl(request.url)
-        response.setHeader('Content-Type', buildResult.contentType)
-        response.end(buildResult.contents)
-        console.log(`${request.url} (${buildResult.originalFileLoc !== null ? `${buildResult.originalFileLoc.replace(process.cwd(), '')}; `: ''}${buildResult.contentType})`)
-      } catch (error) {
-        if (error.message === 'NOT_FOUND') {
-          console.log(`${request.url} not found, calling next middleware.`)
-          // 404 on the client: let other routes handle this if possible.
-          next()
-        } else {
-          // Other error: bubble up.
-          next(error)
-        }
-      }
-    })
-
     await this.appAddDynamicRoutes()
     this.appAddStaticRoutes()
     this.appAddWildcardRoutes()
@@ -1209,11 +1178,13 @@ class Place {
     const roots = []
 
     // Serve any generated static content (e.g., Hugo output) that might exist.
-    const generatedStaticFilesDirectory = path.join(this.pathToServe, '.generated')
-    if (fs.existsSync(generatedStaticFilesDirectory)) {
-      this.log(`   🎠    ❨Place❩ Serving generated static files.`)
-      roots.push(generatedStaticFilesDirectory)
-    }
+    // const generatedStaticFilesDirectory = path.join(this.pathToServe, '.generated')
+    // if (fs.existsSync(generatedStaticFilesDirectory)) {
+    //   this.log(`   🎠    ❨Place❩ Serving generated static files.`)
+    //   roots.push(generatedStaticFilesDirectory)
+    // }
+
+    // TODO: Keep as array?
 
     // Add the regular static web root.
     roots.push(this.pathToServe)
@@ -1409,17 +1380,23 @@ class Place {
     }
   }
 
-  // Add dynamic routes, if any, if a <pathToServe>/.dynamic/ folder exists.
+  // Add dynamic routes. These are akin to the DotJS conventions as used by Site.js
+  // (https://sitejs.org) but, unlike Site.js, since Place is not a generic
+  // server but a Small Web Protocol Server:
+  //
+  // - we use regular instead of hidden directories (e.g., https instead of .https, wss instead of .wss, etc.)
+  // - all our routes are loaded from our own routes/ folder
+  //
   // If there are errors in any of your dynamic routes, you will get 500 (server) errors.
   //
   // Each of the routing conventions are mutually exclusive and applied according to the following precedence rules:
   //
   // 1. Advanced _routes.js_-based advanced routing.
   //
-  // 2. Separate folders for _.https_ and _.wss_ routes routing (the _.http_ folder itself will apply
+  // 2. Separate folders for _https_ and _wss_ routes routing (the _https_ folder itself will apply
   // precedence rules 3 and 4 internally).
   //
-  // 3. Separate folders for _.get_ and _.post_ routes in HTTPS-only routing.
+  // 3. Separate folders for _get_ and _post_ routes in HTTPS-only routing.
   //
   // 4. GET-only routing.
   //
@@ -1428,7 +1405,7 @@ class Place {
   async appAddDynamicRoutes () {
     // Initially check if a dynamic routes directory exists. If it does not,
     // we don’t need to take this any further.
-    const dynamicRoutesDirectory = path.join(this.pathToServe, '.dynamic')
+    const dynamicRoutesDirectory = path.join(__dirname, 'routes')
 
     if (fs.existsSync(dynamicRoutesDirectory)) {
       const addBodyParser = () => {
@@ -1463,8 +1440,8 @@ class Place {
         }
 
         // Check if separate .get and .post route directories exist.
-        const httpsGetRoutesDirectory = path.join(httpsRoutesDirectory, '.get')
-        const httpsPostRoutesDirectory = path.join(httpsRoutesDirectory, '.post')
+        const httpsGetRoutesDirectory = path.join(httpsRoutesDirectory, 'get')
+        const httpsPostRoutesDirectory = path.join(httpsRoutesDirectory, 'post')
         const httpsGetRoutesDirectoryExists = fs.existsSync(httpsGetRoutesDirectory)
         const httpsPostRoutesDirectoryExists = fs.existsSync(httpsPostRoutesDirectory)
 
@@ -1475,7 +1452,7 @@ class Place {
 
         if (httpsGetRoutesDirectoryExists || httpsPostRoutesDirectoryExists) {
           // Either .get or .post routes directories (or both) exist.
-          this.log('   ⛺    ❨Place❩ Found .get/.post folders. Will load dynamic routes from there.')
+          this.log('   ⛺    ❨Place❩ Found get/post folders. Will load dynamic routes from there.')
           if (httpsGetRoutesDirectoryExists) {
             await loadHttpsGetRoutesFrom(httpsGetRoutesDirectory)
           }
@@ -1525,14 +1502,14 @@ class Place {
       // ==========================================================================================
       //
 
-      const httpsRoutesDirectory = path.join(dynamicRoutesDirectory, '.https')
-      const wssRoutesDirectory = path.join(dynamicRoutesDirectory, '.wss')
+      const httpsRoutesDirectory = path.join(dynamicRoutesDirectory, 'https')
+      const wssRoutesDirectory = path.join(dynamicRoutesDirectory, 'wss')
       const httpsRoutesDirectoryExists = fs.existsSync(httpsRoutesDirectory)
       const wssRoutesDirectoryExists = fs.existsSync(wssRoutesDirectory)
 
       if (httpsRoutesDirectoryExists || wssRoutesDirectoryExists) {
         // Either .https or .wss routes directories (or both) exist.
-        this.log('   ⛺    ❨Place❩ Found .https/.wss folders. Will load dynamic routes from there.')
+        this.log('   ⛺    ❨Place❩ Found https/wss folders. Will load dynamic routes from there.')
         if (httpsRoutesDirectoryExists) {
           await loadHttpsRoutesFrom(httpsRoutesDirectory)
         }
