@@ -19,7 +19,6 @@ Place is a hard fork of [Site.js](https://sitejs.org).
   - Refactored to use ECMAScript Modules (esm) (Tue, Jan 26, 2021).
   - Due to move to esm will require Node 14.x+
   - Will no longer be shipped as a single binary (but the experience of installing it will remain the same). This will free us from our dependence on Nexe and will mean we can easily adopt and support the latest Node.js LTS. Binary builds and related functionality will be removed. Run `node bin/place.js <path to your small web client>` to test.
-  - TODO: current authentication implementation is hardcoded to the test domain used in the sign in spike. Generalise/fix.
 
 Note that, unlike the generic behaviour of Site.js, the server routes of Place are hardcoded and only serve the small web protocols. You can create the client for a small web place using any tools you like as long as they output to a static single-page app (SPA) that conforms to the small web protocols.
 
