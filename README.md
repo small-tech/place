@@ -22,6 +22,69 @@ Place is a hard fork of [Site.js](https://sitejs.org).
 
 Note that, unlike the generic behaviour of Site.js, the server routes of Place are hardcoded and only serve the small web protocols. You can create the client for a small web place using any tools you like as long as they output to a static single-page app (SPA) that conforms to the small web protocols.
 
+__Place command-line interface. Drafted Feb 18, 2021. To be implemented:__
+
+## Syntax
+
+```
+place [command] [options]
+```
+
+## Commands
+
+#### `serve`
+
+_(Default command if no command is specified.)_
+
+Serves the small web place optionally identified by the passed domain at the location optionally specified by the passed flag.
+
+```
+place [serve] [domain] [local-path-for-client|https-git-url-for-client] [--at-localhost|--at-hostname|--as-daemon]
+```
+
+##### Positional arguments
+
+  - `domain`: _(optional)_ a [fully-qualified domain name](https://en.wikipedia.org/wiki/Fully_qualified_domain_name) (FQDN).
+
+    This is the domain that is used to identify your small web place and where you will ultimately be serving your small web place from publicly.
+
+    e.g., `aral.small-web.org`
+
+    _If `domain` is not specified, the place that was last served is served (or an error is shown if this is the first time `place serve` is run)._
+
+  - `local-path-for-client`: _(optional)_ If provided, this is the path to the build artefact of your client ­(a single page app, or SPA, that conforms to small web conventions and protocols).
+
+  - `https-git-url-for-client`: _(optional)_ URL to public https git endpoint for the source code of the distribution build (single page app; SPA) of the small web client you want to run at your place. This is the software that powers your place.
+
+    If provided, Place will clone the repository (if it hasn’t already) and serve the client.
+
+    e.g., If you want to run Meep (currently does not exist) at your place, you would use the URL: `https://aral.small-web.org/source/meep-client`.
+
+    If neither this nor `local-path-for-client` is provided, Place defaults to serving a placeholder message at `https://localhost` instead of the small web client itself and it is assumed you are running the client separately on a different port. This is the assumed case for development.
+
+##### Flags (optional)
+
+   - `--at-localhost`: (default) serve the place at `https://localhost`.
+
+     (It will also be automatically served from your local IP so you can hit it from anywhere on your LAN).
+
+     Used during development/testing.
+
+   - `--at-hostname`: serve the place at your local machine’s hostname.
+
+     e.g., if your local development machine’s hostname is `dev.ar.al`, that’s the URL your place will be served from.
+
+     Used for staging/testing.
+
+  - `--as-daemon`: serve the place as an automatically-updating and restarting service. (Linux with systemd only.)
+
+    Used for production.
+
+## How it works
+
+1. If a place has already been set up on the local machine for the app you have specified
+
+
 ## Small Web Protocol notes/draft
 
 ### General
