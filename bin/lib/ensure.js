@@ -7,9 +7,7 @@
 
 import childProcess from 'child_process'
 import os from 'os'
-import fs from 'fs-extra'
 import path from 'path'
-import Util from '../../lib/Util.js'
 import Place from '../../index.js'
 import * as runtime from './runtime.js'
 import getStatus from './status.js'
@@ -138,105 +136,6 @@ class Ensure {
       }
     }
   }
-
-  // If the sync option is specified, ensure that Rsync exists on the system.
-  // (This will install it automatically if a supported package manager exists.)
-  rsyncExists() {
-    const rsyncOnWindowsPath = path.join(Util.unprivilegedHomeDirectory(), '.small-tech.org', 'place', 'portable-rsync-with-ssh-for-windows')
-
-    if (os.platform() === 'win32') {
-      if (fs.existsSync(rsyncOnWindowsPath)) return // Already installed.
-    } else {
-      if (this.commandExists('rsync')) return // Already installed.
-    }
-
-    if (os.platform() === 'darwin') {
-      console.log('\n   ⚠️    ❨Place❩ macOS: rsync should be installed default but isn’t. Please fix this before trying again.\n')
-      process.exit(1)
-    }
-
-    if (os.platform() === 'win32') {
-      //
-      // Since Windows does not have rsync, we use the @small-tech/portable-rsync-with-ssh-for-windows package to include a portable
-      // build of rsync and ssh that uses cygwin emulation.
-      //
-      // We copy all the files to an external directory so that we can call execSync() on it as we’re wrapped in an executable using Nexe
-      // (https://github.com/nexe/nexe).
-      //
-      // We are use readFileSync() and writeFileSync() as, earlier, Nexe did not support copyFileSync(). However, it looks like they
-      // do now so we can test and refactor this later if necessary (see https://github.com/nexe/nexe/issues/607).
-      //
-      console.log('   🌠    ❨Place❩ Unbundling cygwin emulated rsync and ssh for Windows…')
-
-      const appRootDirectory = path.join(__dirname, '..', '..')
-      const internalRsyncBundleDirectory = path.join(appRootDirectory, 'node_modules', '@small-tech', 'portable-rsync-with-ssh-for-windows')
-      const internalBinDirectory = path.join(internalRsyncBundleDirectory, 'bin')
-      const internalEtcDirectory = path.join(internalRsyncBundleDirectory, 'etc')
-
-      const binFiles = fs.readdirSync(internalBinDirectory)
-      const etcFiles = fs.readdirSync(internalEtcDirectory)
-
-      const externalRsyncBundleDirectory = rsyncOnWindowsPath
-      const externalBinDirectory = path.join(externalRsyncBundleDirectory, 'bin')
-      const externalEtcDirectory = path.join(externalRsyncBundleDirectory, 'etc')
-
-      fs.ensureDirSync(externalBinDirectory)
-      fs.ensureDirSync(externalEtcDirectory)
-
-      binFiles.forEach(fileToCopy => {
-        try {
-          const fileBuffer = fs.readFileSync(path.join(internalBinDirectory, fileToCopy), 'binary')
-          fs.writeFileSync(path.join(externalBinDirectory, fileToCopy), fileBuffer, {encoding: 'binary', mode: 0o755})
-        } catch (error) {
-          throw new Error(`   ❌    ❨Place❩ Panic: Could not copy bin file to external directory: ${error.message}`)
-        }
-      })
-
-      etcFiles.forEach(fileToCopy => {
-        try {
-          const fileBuffer = fs.readFileSync(path.join(internalEtcDirectory, fileToCopy), 'binary')
-          fs.writeFileSync(path.join(externalEtcDirectory, fileToCopy), fileBuffer, {encoding: 'binary', mode: 0o755})
-        } catch (error) {
-          throw new Error(`   ❌    ❨Place❩ Panic: Could not copy etc file to external directory: ${error.message}`)
-        }
-      })
-
-      console.log('   🎉    ❨Place❩ Rsync and ssh unbundled into Windows.\n')
-      return
-    }
-
-    //
-    // Attempt to install rsync on Linux-like environments.
-    //
-
-    console.log('   🌠    ❨Place❩ Installing Rsync dependency…')
-
-    let options = {env: process.env}
-    try {
-      if (this.commandExists('apt')) {
-        options.env.DEBIAN_FRONTEND = 'noninteractive'
-        childProcess.execSync('sudo apt-get install -y -q rsync', options)
-        console.log('   🎉    ❨Place❩ Rsync installed using apt.\n')
-      } else if (this.commandExists('yum')) {
-        // Untested: if you test this, please let me know https://github.com/indie-mirror/https-server/issues
-        console.log('\n   🤪     ❨Place❩ Attempting to install required dependency using yum. This is currently untested. If it works (or blows up) for you, I’d appreciate it if you could open an issue at https://github.com/indie-mirror/https-server/issues and let me know. Thanks! – Aral\n')
-        childProcess.execSync('sudo yum install rsync', options)
-        console.log('   🎉    ❨Place❩ Rsync installed using yum.')
-      } else if (this.commandExists('pacman')) {
-        childProcess.execSync('sudo pacman -S rsync', options)
-        console.log('   🎉    ❨Place❩ Rsync installed using pacman.')
-      } else {
-        // No supported package managers installed. Warn the person.
-        console.log('\n   ⚠️     ❨Place❩ Linux: No supported package manager found for installing Rsync on Linux (tried apt, yum, and pacman). Please install Rsync manually and run Place again.\n')
-        process.exit(1)
-      }
-    } catch (error) {
-      // There was an error and we couldn’t install the dependency. Warn the person.
-      console.log('\n   ⚠️     ❨Place❩ Linux: Failed to install Rsync. Please install it manually and run Place again.\n', error)
-      process.exit(1)
-    }
-  }
-
 }
 
 export default new Ensure()

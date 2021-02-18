@@ -237,61 +237,11 @@ function enable (args) {
         process.exit(1)
       }
 
-      // When enable command is run with the --ensure-can-sync option, ensure that the current environment
-      // is set up to accept remote rsync over ssh and also provide some useful information
-      // for setting up the client-side development server.
-      if (args.named['ensure-can-sync']) {
-        ensure.rsyncExists()
-        disableInsecureRsyncDaemon()
-        displayConnectionInformation(pathToServe)
-      }
-
       // All OK!
       console.log('\n   👍    ❨Place❩ You’re all set!\n')
     }
   })
 }
 
-
-function displayConnectionInformation(pathToServe) {
-  try {
-    const hostname = childProcess.execSync('hostname', {env: process.env, stdio: 'pipe'}).toString('utf-8').trim()
-
-    // Note: since this process will be run internally with sudo, we cannot use process.env.USER
-    // ===== here as that would return root. However, process.env.HOME returns the regular account’s home folder
-    //       and we can use that to find the account name.
-    const homeDirectory = process.env.HOME
-    const homeDirectoryFragments = homeDirectory.split(path.sep)
-    const account = homeDirectoryFragments[homeDirectoryFragments.length - 1]
-
-    const absolutePathToServe = path.resolve(pathToServe)
-
-    const syncToValue = `${account}@${hostname}:${absolutePathToServe}`
-
-    // TODO: Update this message or remove it if no longer necessary for small web use.
-    console.log(` 💫 [Sync] To sync from your local machine, from within your site’s folder, use:`)
-    console.log(` 💫 [Sync] site --sync-to=${syncToValue}\n`)
-  } catch (error) {
-    console.log(error, `\n   ❌    ${clr('❨Place❩ Error:', 'red')} Could not get connection information.\n`)
-    process.exit(1)
-  }
-}
-
-
-// Disable rsync daemon on host to plug that security hole in case it was on. (All
-// our rsync calls will take place via ssh as they should.)
-function disableInsecureRsyncDaemon() {
-  try {
-    process.stdout.write(' 💫 [Sync] Securing Rsync… ')
-    childProcess.execSync('sudo systemctl stop rsync', {env: process.env, stdio: 'pipe'})
-    childProcess.execSync('sudo systemctl disable rsync', {env: process.env, stdio: 'pipe'})
-    childProcess.execSync('sudo systemctl mask rsync', {env: process.env, stdio: 'pipe'})
-    console.log('done!')
-    console.log(` 💫 [Sync] Rsync set up to only allow secure access via ssh.\n`)
-  } catch (error) {
-    console.log(error, `\n   ❌    ${clr('❨Place❩ Error:', 'red')} Could not disable insecure rsync daemon.\n`)
-    process.exit(1)
-  }
-}
 
 export default enable

@@ -381,7 +381,7 @@ test('[commands] help', t => {
 
 ▶ place [command] [folder] [@host[:port]] [--options]
 
-  command    serve | pull | push | enable | disable | start | stop | restart | logs | status | update | uninstall | version | help
+  command    serve | enable | disable | start | stop | restart | logs | status | update | uninstall | version | help
   folder  Path of folder to serve (defaults to current folder).
   @host[:port]  Host (and, optionally port) to serve. Valid hosts are @localhost and @hostname.
   --options    Settings that alter command behaviour.
@@ -426,14 +426,6 @@ test('[commands] help', t => {
   --access-log-errors-only          Display only errors in the access log (HTTP status codes _4xx_ and _5xx_).
   --access-log-disable              Completely disable the access log. Not even errors are logged.
 
-  For enable command:
-
-  --ensure-can-sync    Ensure server can rsync via ssh.
-
-  For both pull and push commands:
-
-  --domain         Specify the domain to sync to manually (otherwise derived from the folder name).
-
   Examples:
 
     Develop using locally-trusted TLS certificates:
@@ -461,7 +453,6 @@ test('[commands] help', t => {
     Start-up daemon:
 
   • Install & serve current folder as daemon  ▶ place enable
-  • Ditto & also ensure it can rsync via ssh  ▶ place enable --ensure-can-sync
   • Get status of deamon                      ▶ place status
   • Start server                              ▶ place start
   • Stop server                               ▶ place stop
@@ -485,7 +476,7 @@ test('[commands] help', t => {
     (It doesn’t by default for accessibility reasons.)
 
   ▶ place [command] [folder] [@host[:port]] [--options]
-    command    serve | pull | push | update | uninstall | version | help
+    command    serve | update | uninstall | version | help
     folder  Path of folder to serve (defaults to current folder).
     @host[:port]  Host (and, optionally port) to serve. Valid hosts are @localhost and @hostname.
 
@@ -499,9 +490,6 @@ test('[commands] help', t => {
     serve  Serve specified folder on specified @host (at :port, if given).
         The order of arguments is: 1. what to serve, 2. where to serve it. e.g.,
             ▶ place serve my-folder @localhost
-
-    pull  Pull (download) your site from a remote Small Web server.
-    push  Push (deploy) your site to a remote Small Web server.
 
     update  Check for Place updates and update if new version is found.
     uninstall  Uninstall Place.
@@ -517,10 +505,6 @@ test('[commands] help', t => {
     --skip-domain-reachability-check  Do not run pre-flight check for domain reachability.
     --access-log-errors-only            Display only errors in the access log (HTTP status codes _4xx_ and _5xx_).
     --access-log-disable                Completely disable the access log. Not even errors are logged.
-
-    For both pull and push commands:
-
-    --domain         Specify the domain to sync to manually (otherwise derived from the folder name).
 
     Examples:
       Develop using locally-trusted TLS certificates:
@@ -562,7 +546,7 @@ test('[commands] help', t => {
     (It doesn’t by default for accessibility reasons.)
 
   ▶ place [command] [folder] ["@host[:port]"] [--options]
-    command    serve | pull | push | update | uninstall | version | help
+    command    serve | update | uninstall | version | help
     folder  Path of folder to serve (defaults to current folder).
     "@host[:port]"  Host (and, optionally port) to serve. Valid hosts are @localhost and @hostname.
     --options    Settings that alter command behaviour.
@@ -572,9 +556,6 @@ test('[commands] help', t => {
     serve  Serve specified folder on specified "@host" (at :port, if given).
         The order of arguments is: 1. what to serve, 2. where to serve it. e.g.,
             ▶ place serve my-folder "@localhost"
-
-    pull  Pull (download) your site from a remote Small Web server.
-    push  Push (deploy) your site to a remote Small Web server.
 
     update  Check for Place updates and update if new version is found.
     uninstall  Uninstall Place.
@@ -590,10 +571,6 @@ test('[commands] help', t => {
     --skip-domain-reachability-check  Do not run pre-flight check for domain reachability.
     --access-log-errors-only            Display only errors in the access log (HTTP status codes _4xx_ and _5xx_).
     --access-log-disable                Completely disable the access log. Not even errors are logged.
-
-    For both pull and push commands:
-
-    --domain         Specify the domain to sync to manually (otherwise derived from the folder name).
 
     Examples:
       Develop using locally-trusted TLS certificates:
@@ -634,7 +611,7 @@ test('[commands] help', t => {
     (It doesn’t by default for accessibility reasons.)
 
   ▶ place [command] [folder] [@host[:port]] [--options]
-    command    serve | pull | push | update | uninstall | version | help
+    command    serve | update | uninstall | version | help
     folder  Path of folder to serve (defaults to current folder).
     @host[:port]  Host (and, optionally port) to serve. Valid hosts are @localhost and @hostname.
 
@@ -666,10 +643,6 @@ test('[commands] help', t => {
     --skip-domain-reachability-check  Do not run pre-flight check for domain reachability.
     --access-log-errors-only            Display only errors in the access log (HTTP status codes _4xx_ and _5xx_).
     --access-log-disable                Completely disable the access log. Not even errors are logged.
-
-    For both pull and push commands:
-
-    --domain         Specify the domain to sync to manually (otherwise derived from the folder name).
 
     Examples:
       Develop using locally-trusted TLS certificates:
