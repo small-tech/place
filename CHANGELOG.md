@@ -16,6 +16,10 @@ _Based on [Site.js](https://sitejs.org) at commit [0be25a5](https://github.com/s
 
   - Name changed to Place.
   - Web site changed to place.small-web.org.
+  - Decouples client and server.
+  - Server-side routes (dynamic routes) are now hardcoded for Small Web protocols. The only configurable aspect is the small web client you are serving.
+  - No longer a single binary; no longer using Nexe.
+  - Command-line interface has different syntax and defaults (work-in-progress)
 
 ### Added
 
@@ -30,7 +34,7 @@ _Based on [Site.js](https://sitejs.org) at commit [0be25a5](https://github.com/s
 
   - Proxy server feature.
   - Integrated Hugo feature.
-  - Sync option (only `pull` and `push` are supported in Place).
+  - Sync option, pull, and push commands.
   - Live sync feature.
   - Archival cascade feature.
   - 404 → 302 feature.

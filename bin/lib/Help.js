@@ -69,9 +69,6 @@ class Help {
 
     const commandServe = command('serve')
 
-    const commandPull = command('pull')
-    const commandPush = command('push')
-
     const commandEnable = command('enable')
     const commandDisable = command('disable')
     const commandStart = command('start')
@@ -94,7 +91,6 @@ class Help {
     const optionDomain = option('domain')
     const optionSkipDomainReachabilityCheck = option('skip-domain-reachability-check')
 
-    const optionEnsureCanSync = option('ensure-can-sync')
     const optionAccessLogErrorsOnly = option('access-log-errors-only')
     const optionAccessLogDisable = option('access-log-disable')
 
@@ -116,7 +112,7 @@ class Help {
       [],
       [`${prompt} ${clr(appName, 'bold')} [${usageCommand}] [${usageFolder}] [${usageHostAndPort}] [${usageOptions}]` ],
       [],
-      [usageCommand, `${commandServe} | ${commandPull} | ${commandPush}${this.systemdExists ? `| ${commandEnable} | ${commandDisable} | ${commandStart} | ${commandStop} | ${commandRestart} | ${commandLogs} | ${commandStatus}` : ''} | ${commandUpdate} | ${commandUninstall} | ${commandVersion} | ${commandHelp}`],
+      [usageCommand, `${commandServe}${this.systemdExists ? ` | ${commandEnable} | ${commandDisable} | ${commandStart} | ${commandStop} | ${commandRestart} | ${commandLogs} | ${commandStatus}` : ''} | ${commandUpdate} | ${commandUninstall} | ${commandVersion} | ${commandHelp}`],
       [usageFolder, `Path of folder to serve (defaults to current folder).`],
       [usageHostAndPort, `Host (and, optionally port) to serve. Valid hosts are @localhost and @hostname.`],
       [usageOptions,`Settings that alter command behaviour.`],
@@ -132,9 +128,6 @@ class Help {
       [],
       ['', `${prompt} ${appName} ${commandServe} ${argument('my-folder')} ${argument('@localhost')}`],
       [],
-      [commandPull, `Pull (download) your site from a remote Small Web server.`],
-      [commandPush, `Push (deploy) your site to a remote Small Web server.`],
-      []
     ]
 
     const commandsThatRequireSystemd = [
@@ -178,21 +171,7 @@ class Help {
       []
     ]
 
-    const optionsThatRequireSystemd = [
-      [`For ${commandEnable} command:`],
-      [],
-      [optionEnsureCanSync, 'Ensure server can rsync via ssh.'],
-      []
-    ]
-
-    if (this.systemdExists) {
-      optionsContent = optionsContent.concat(optionsThatRequireSystemd)
-    }
-
     const optionsFooter = [
-      [`For both ${commandPull} and ${commandPush} commands:`],
-      [],
-      [optionDomain, 'Specify the domain to sync to manually (otherwise derived from the folder name).'],
       []
     ]
 
@@ -242,7 +221,6 @@ class Help {
       [`Start-up daemon:`],
       [],
       [`• Install & serve current folder as daemon `, `${prompt} ${appName} ${commandEnable}`],
-      [`• Ditto & also ensure it can rsync via ssh`, `${prompt} ${appName} ${commandEnable} ${optionEnsureCanSync}`],
       [`• Get status of deamon`, `${prompt} ${appName} ${commandStatus}`],
       [`• Start server`, `${prompt} ${appName} ${commandStart}`],
       [`• Stop server`, `${prompt} ${appName} ${commandStop}`],
