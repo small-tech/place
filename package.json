@@ -58,7 +58,6 @@
     "@small-tech/instant": "^1.1.0",
     "@small-tech/jsdb": "^1.1.5",
     "@small-tech/web-routes-from-files": "^3.0.1",
-    "@snowpack/plugin-svelte": "^3.5.1",
     "ansi-escape-sequences": "^4.1.0",
     "bent": "^7.3.4",
     "body-parser": "^1.19.0",
