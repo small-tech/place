@@ -132,48 +132,9 @@ async function serve (args) {
     }
 
     // Create the place before continuing to serve it.
-    await create(domain, client, placePath, clientPath)
-
+    const placeDetails = await create(domain, client, placePath, clientPath)
+    client = placeDetails.client
   }
-
-  process.exit()
-
-  //
-  // Check if place has been initialised yet.
-  // If not, run the creation process.
-  //
-  // const folder = path === null ? '.' : path
-  // const placePath = pathModule.resolve(folder)
-  // const lastPathSeparator = placePath.lastIndexOf(pathModule.sep)
-  // const placeDomain = placePath.slice(lastPathSeparator + 1)
-  // const placeDataPath = pathModule.join(Place.settingsDirectory, placeDomain)
-
-  // if (!fs.existsSync(placePath) || !fs.existsSync(placeDataPath)) {
-  //   Place.logAppNameAndVersion()
-  //   console.log(` ℹ️  Place ${placeDomain} is not initialised.`)
-
-  //   const confirmCreate = await inquirer.prompt([
-  //     {
-  //       type: 'confirm',
-  //       name: 'create',
-  //       prefix: ' 🙋',
-  //       message: `Create a new place at ${chalk.green(placePath)}?`,
-  //       default: true
-  //     }
-  //   ])
-
-  //   if (!confirmCreate.create) {
-  //     console.log('\n ❌️ Aborting!')
-  //     console.log(chalk.hsl(329,100,50)('\n    Goodbye.'))
-  //     process.exit(1)
-  //   }
-
-  //   // Create the place before continuing to serve it.
-  //   await create({
-  //     positional: [placePath],
-  //     named: args.named
-  //   })
-  // }
 
   //
   // Parse named arguments.
@@ -230,6 +191,8 @@ async function serve (args) {
 
       let options = {
         domain,
+        placePath,
+        client,
         clientPath,
         port,
         global,

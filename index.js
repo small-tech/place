@@ -282,25 +282,33 @@ class Place {
       Place.hostname = options.domain
     }
 
-    const _pathToServe = typeof options.path === 'string' ? options.path : '.'
+    // const _pathToServe = typeof options.path === 'string' ? options.path : '.'
 
     // It is a common mistake to start the server in a .dynamic folder (or subfolder), etc.
     // In these cases, try to recover and do the right thing.
     // TODO: No longer necessary. Remove []
-    const {pathToServe, absolutePathToServe} = Util.magicallyRewritePathToServeIfNecessary(options.path, _pathToServe)
+    // const {pathToServe, absolutePathToServe} = Util.magicallyRewritePathToServeIfNecessary(options.path, _pathToServe)
 
-    this.pathToServe = pathToServe
-    this.absolutePathToServe = absolutePathToServe
-    this.databasePath = path.join(this.absolutePathToServe, '.db')
+    // TODO: These are the same now. Refactor.
+    this.pathToServe = options.clientPath
+    this.absolutePathToServe = this.pathToServe
+
+    this.placePath = options.placePath
+
+    this.databasePath = path.join(this.placePath, '.db')
+
+    // TODO: These will always be decided now. Refactor.
     this.port = typeof options.port === 'number' ? options.port : 443
     this.global = typeof options.global === 'boolean' ? options.global : false
+
     this.aliases = Array.isArray(options.aliases) ? options.aliases : []
-    this.syncHost = options.syncHost
+
     this.skipDomainReachabilityCheck = options.skipDomainReachabilityCheck
     this.accessLogErrorsOnly = options.accessLogErrorsOnly
     this.accessLogDisable = options.accessLogDisable
 
-    Place.pathToServe = pathToServe
+    // TODO: Refactor.
+    Place.pathToServe = this.pathToServe
 
     if (this.skipDomainReachabilityCheck) {
       this.log(`   ⚠     ${clr('❨Place❩ Domain reachability pre-flight check is disabled.', 'yellow')}`)
@@ -321,11 +329,7 @@ class Place {
     this.options = options
 
     // Read in public keys.
-    const placeFullPath = path.resolve(this.pathToServe)
-    const placeName = placeFullPath.slice(placeFullPath.lastIndexOf(path.sep) + 1)
-    const placeDataPath = path.join(Place.settingsDirectory, placeName)
-
-    const placeKeysPath = path.join(placeDataPath, 'public-keys.json')
+    const placeKeysPath = path.join(this.placePath, 'public-keys.json')
 
     if (!fs.existsSync(placeKeysPath)) {
       this.log(`\n   ❌    ${clr('❨Place❩ Error:', 'red')} Place keys file does not exist at ${placeKeysPath}. Have you run place create?\n`)
@@ -1121,16 +1125,13 @@ class Place {
 
   // Add git server functionality
   appAddGitRoutes () {
-    const placeFullPath = path.resolve(this.pathToServe)
-    const placeName = placeFullPath.slice(placeFullPath.lastIndexOf(path.sep) + 1)
-    const placeDataPath = path.join(Place.settingsDirectory, placeName)
-
-    if (!fs.existsSync(placeDataPath)) {
-      this.log(`\n   ❌    ${clr('❨Place❩ Error:', 'red')} Place data path does not exist at ${placeDataPath}. Have you run place create?\n`)
+    // TODO: this check is no longer necessary. Confirm + remove.
+    if (!fs.existsSync(this.placePath)) {
+      this.log(`\n   ❌    ${clr('❨Place❩ Error:', 'red')} Place does not exist at ${this.placePath}. Have you run place create?\n`)
       process.exit(1)
     }
 
-    const gitServer = new NodeGitServer(placeDataPath, {
+    const gitServer = new NodeGitServer(this.placePath, {
       autoCreate: true,
       authenticate: ({type, repo, user}, next) => {
         // console.log('Type', type)

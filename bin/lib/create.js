@@ -208,6 +208,10 @@ async function create (domain, client, placePath, clientPath) {
   })
 
   spinner.stopAndPersist({ symbol: ' ✔️ ', text: 'Client cloned.' })
+
+  console.log(' ✔️  Place created.')
+
+  return { client }
 }
 
 export default create
