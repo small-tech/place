@@ -18,10 +18,12 @@ import os from 'os'
 import fs from 'fs-extra'
 import path from 'path'
 import chalk from 'chalk'
-import git from 'isomorphic-git'
 import generateEFFDicewarePassphrase from 'eff-diceware-passphrase'
 import session25519 from 'session25519'
 import crypto from 'crypto'
+
+import git from 'isomorphic-git'
+import http from 'isomorphic-git/http/node/index.js'
 
 async function create (domain, client, placePath, clientPath) {
 
@@ -89,7 +91,7 @@ async function create (domain, client, placePath, clientPath) {
       prefix: ' 🙋',
       name: 'customClient',
       message: 'Client git distribution URL',
-      default: 'https://source.small-web.org/small-web/henry-dist',
+      default: 'https://source.small-tech.org/small-web/henry-dist.git',
       when: function (details) {
         return details.client === 'Other'
       },
@@ -102,13 +104,13 @@ async function create (domain, client, placePath, clientPath) {
   if (details.client) {
     switch (details.client) {
       case 'Small Web Reference Client (Henry)':
-        client = 'https://source.small-web.org/small-web/henry-dist'
+        client = 'https://source.small-tech.org/small-web/henry-dist.git'
         break
       case 'Small Web Social Network (Meep)':
-        client = 'https://source.small-web.org/small-web/meep-dist'
+        client = 'https://source.small-web.org/small-web/meep-dist.git'
         break
       case 'Small Web Host (Basil)':
-        client = 'https://source.small-web.org/small-web/basil-dist'
+        client = 'https://source.small-web.org/small-web/basil-dist.git'
         break
       default:
         // Custom URL
@@ -118,7 +120,7 @@ async function create (domain, client, placePath, clientPath) {
 
   // Default to Small Web Refence Client (Henry)
   if (client === undefined) {
-    client = 'https://source.small-web.org/small-web/henry-dist'
+    client = 'https://source.small-tech.org/small-web/henry-dist.git'
   }
 
   // Show the summary and get confirmation before starting the process.
@@ -193,29 +195,19 @@ async function create (domain, client, placePath, clientPath) {
   // TODO
 
   // Clone the client.
-  // TODO
+  spinner.text = `Cloning client from ${client}…`
+  spinner.start()
 
-  //
-  // Create the git repository.
-  //
+  await git.clone({
+    fs,
+    http,
+    dir: clientPath,
+    url: client,
+    singleBranch: true,
+    depth: 1
+  })
 
-  // spinner.text = 'Initialising source code repository…'
-  // spinner.start()
-
-  // // Initialise the git repository.
-  // await git.init({ fs, dir: placePath})
-
-  // // Add remotes for the domain name (as derived from the folder name), localhost (for local testing), Local Area Network IP address (for same LAN testing), and hostname (for staging via PageKite, etc.).
-  // await git.addRemote ({ fs, dir: placePath, remote: 'origin', url: `https://${placeDomain}/source/self`})
-  // await git.addRemote ({ fs, dir: placePath, remote: 'localhost', url: 'https://localhost/source/self'})
-  // await git.addRemote ({ fs, dir: placePath, remote: 'hostname', url: `https://${os.hostname()}/source/self`})
-
-  // const localAreaNetworkInterfaces = allLocalInterfaces().filter(value => value !== '127.0.0.1')
-  // if (localAreaNetworkInterfaces.length > 0) {
-  //   await git.addRemote ({ fs, dir: placePath, remote: 'ip', url: `https://${localAreaNetworkInterfaces[0]}/source/self`})
-  // }
-
-  // spinner.stopAndPersist({ symbol: ' ✔️ ', text: 'Source code repository initialised.' })
+  spinner.stopAndPersist({ symbol: ' ✔️ ', text: 'Client cloned.' })
 }
 
 export default create
@@ -242,41 +234,6 @@ function generatePublicKeys (salt, passphrase) {
     })
   })
 }
-
-
-// function generateKeys (domain, passphrase) {
-//   return new Promise((resolve, reject) => {
-//     session25519(domain, passphrase, (error, keys) => {
-//       if (error) {
-//         return reject(error)
-//       }
-
-//       resolve({
-//         signing: {
-//           secret: toHex(keys.secretSignKey),
-//           public: toHex(keys.publicSignKey)
-//         },
-//         encryption: {
-//           secret: toHex(keys.secretKey),
-//           public: toHex(keys.publicKey)
-//         }
-//       })
-//     })
-//   })
-// }
-
-
-function allLocalInterfaces () {
-  // Support all local interfaces so that the machine can be reached over the local network via IPv4.
-  // This is very useful for testing with multiple devices over the local area network without needing to expose
-  // the machine over the wide area network/Internet using a service like ngrok.
-  return Object.entries(os.networkInterfaces())
-  .map(iface =>
-    iface[1].filter(addresses =>
-      addresses.family === 'IPv4')
-      .map(addresses => addresses.address)).flat()
-}
-
 
 // From libsodium.
 function toHex(input) {
