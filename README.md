@@ -32,15 +32,39 @@ place [command] [options]
 
 ## Commands
 
+__Note: documentation is currently ahead of implementation.__
+
 #### `serve`
 
 _(Default command if no command is specified.)_
 
-Serves the small web place optionally identified by the passed domain at the location optionally specified by the passed flag.
+Serves a small web place with the client optionally specified by the HTTPS git URL of its distribution repository at the identifying domain optionally identified by the passed domain at the location optionally specified by the passed flag and with the person’s identity supplied by the optional public keys.
 
 ```
-place [serve] [domain] [local-path-for-client|https-git-url-for-client] [--at-localhost|--at-hostname|--as-daemon]
+place [serve] [domain] [--client=https-git-url-of-client] [--at-localhost|--at-hostname] [--public-signing-key=…] [--public-encryption-key=…]
 ```
+
+If no arguments are specified, runs the place using the settings used on the previous run or starts interactive place creation flow if there was no previous run.
+
+##### Examples:
+
+  - Serve `aral.small-web.org` at `https://localhost:443` with the Small Web Reference Client (Henry):
+
+    ```
+    place aral.small-web.org
+    ```
+
+    (While developing clients, you can run the client you’re developing on a different port, e.g., 444.)
+
+    _Note: this is equivalent to the more verbose `place aral.small-web.org --at-hostname` or, the even more verbose (full syntax), `place serve aral.small-web.org --at-localhost`_
+
+  - Assuming that the local hostname of your development machine is `dev.ar.al`, serve `aral.small-web.org` from `https://dev.ar.al`:
+
+    ```
+    place aral.small-web.org --at-hostname
+    ```
+
+    _Note: this is equivalent to the more verbose (full syntax) `place serve aral.small-web.org --at-hostname`_
 
 ##### Positional arguments
 
@@ -52,17 +76,18 @@ place [serve] [domain] [local-path-for-client|https-git-url-for-client] [--at-lo
 
     _If `domain` is not specified, the place that was last served is served (or an error is shown if this is the first time `place serve` is run)._
 
-  - `local-path-for-client`: _(optional)_ If provided, this is the path to the build artefact of your client ­(a single page app, or SPA, that conforms to small web conventions and protocols).
+    Note that this does not have to be domain that the place is served from, it is the domain that currently identifies the place. It could, for example, be served from localhost during development or the development machine’s IP address or hostname during testing.
 
-  - `https-git-url-for-client`: _(optional)_ URL to public https git endpoint for the source code of the distribution build (single page app; SPA) of the small web client you want to run at your place. This is the software that powers your place.
+##### Flags (optional)
+
+  - `--client=https-git-url-for-client`: _(optional)_ URL to public https git endpoint for the source code of the distribution build (single page app; SPA) of the small web client you want to run at your place. This is the software that powers your place.
 
     If provided, Place will clone the repository (if it hasn’t already) and serve the client.
 
-    e.g., If you want to run Meep (currently does not exist) at your place, you would use the URL: `https://aral.small-web.org/source/meep-client`.
+    e.g., If you want to run Meep (currently does not exist) at your place, you would use the URL: `https://aral.small-web.org/source/meep-dist`.
 
-    If neither this nor `local-path-for-client` is provided, Place defaults to serving a placeholder message at `https://localhost` instead of the small web client itself and it is assumed you are running the client separately on a different port. This is the assumed case for development.
+    If not specified, Place defaults to serving the Small Web Refrence Client (Henry).
 
-##### Flags (optional)
 
    - `--at-localhost`: (default) serve the place at `https://localhost`.
 
@@ -76,14 +101,34 @@ place [serve] [domain] [local-path-for-client|https-git-url-for-client] [--at-lo
 
      Used for staging/testing.
 
-  - `--as-daemon`: serve the place as an automatically-updating and restarting service. (Linux with systemd only.)
+   - `--public-signing-key=…`: use the public signing key provided as part of the person’s identity (and serve it from `/keys`). If not specified, the previously-set key is used (if no such key exists, the interactive place creation flow is triggered).
 
-    Used for production.
+      Used by hosts when setting up a place (where the private key material never leaves the web client).
 
-## How it works
+   - `--public-encryption-key=…`: use the public encryption key provided as part of the person’s identity (and serve it from `/keys`). If not specified, the previously-set key is used (if no such key exists, the interactive place creation flow is triggered).
 
-1. If a place has already been set up on the local machine for the app you have specified
+      Used by hosts when setting up a place (where the private key material never leaves the web client).
 
+## Other commands
+
+The following commands generally have the same signatures and behaviour as in [Site.js](https://sitejs.org). More comprehensive documentation to follow.
+
+### Daemon-related
+
+  - `status`
+  - `logs`
+  - `start`
+  - `stop`
+  - `restart`
+  - `disable`
+
+_TODO: All these need updating to remove the single-binary-distribution-related code branches as they are no longer relevant._
+
+### General
+
+  - `version` _(TODO: needs updating) Note also that the versioning system will vary from Site.js due to not shipping executables in Place and using git tags for updates)._
+  - `help` _(TODO: needs updating)_
+  - `uninstall` _(TODO: needs updating)_
 
 ## Small Web Protocol notes/draft
 
@@ -104,10 +149,12 @@ The following URLs are reserved and have special meaning.
 #### Server
 
   - `/keys`: (GET) your public Ed25519 signing key and X25519 encryption key. Together, these keys form the identity of your small web place.
-  - `/hostname`: (GET) returns the production hostname of the small web place being served (i.e., if the server is running on localhost during development but the production hostname is `aral.small-web.org`, the latter is what will be returned. This is used when, for example, (re)generating keys from the passphrase on small web clients as the Blake2b hash of the production hostname is used as the crypographic salt).
-  - `/private-token`: (GET) returns a private token (“Bernstein token”) – a cryptographically random 32-byte value that is encrypted with the person’s public X25519 encryption key. (TODO: Rename route to private-token in implementation; currently is private-socket).
-  - `/private/:token`: (WSS) a secyre web socket route for exchange of private data between server and client. `:token` is a random 32-byte value as returned from the `/private-token` route (the person MUST decrypt the encrypted Bernstein token returned in order to successfully authenticate and connect to the private websocket route within a specified timeout period – currently 60 seconds in the implementation).
 
+  - `/hostname`: (GET) returns the production hostname of the small web place being served (i.e., if the server is running on localhost during development but the production hostname is `aral.small-web.org`, the latter is what will be returned. This is used when, for example, (re)generating keys from the passphrase on small web clients as the Blake2b hash of the production hostname is used as the crypographic salt).
+
+  - `/private-token`: (GET) returns a private token (“Bernstein token”) – a cryptographically random 32-byte value that is encrypted with the person’s public X25519 encryption key. (TODO: Rename route to private-token in implementation; currently is private-socket).
+
+  - `/private/:token`: (WSS) a secyre web socket route for exchange of private data between server and client. `:token` is a random 32-byte value as returned from the `/private-token` route (the person MUST decrypt the encrypted Bernstein token returned in order to successfully authenticate and connect to the private websocket route within a specified timeout period – currently 60 seconds in the implementation).
 
 #### Client
 
@@ -117,21 +164,19 @@ Note: The small web protocols are evolving here, alongside the Place (the refere
 
 ## Creating a new place
 
-__NOTE: These instructions/process is outdated. New instructions will be added once a new process has been created.__
+__Note: documentation is ahead of implementation.__
 
-1. Create a folder with the name of your place’s domain:
+### Interactively
 
-    ```
-    aral.small-web.org
-    ```
+  ```
+  place <domain>
+  ```
 
-2. Run place.
+Where `<domain>` has not yet been set up on the local machine.
 
-    ```
-    place aral.small-web.org
-    ```
+### Non-interactively
 
-To server an existing place, just run step 2. (If you’re already in the directory, just run `place`).
+Either run `place serve` or `place enable` and pass all necessary configuration arguments.
 
 ## Background
 
