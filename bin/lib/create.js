@@ -158,18 +158,14 @@ async function create (domain, client, placePath, clientPath) {
 
   console.log('\n ✨️ Creating your Small Web place…\n')
 
-  process.exit()
-
   // Make sure the path exists.
+  console.log(` ✔️  Creating place at ${placePath}.`)
   fs.ensureDirSync(placePath)
 
   const spinner = ora({
     text: '',
     color: 'cyan'
   })
-
-  console.log(` ✔️  Creating data path at ${placeDataPath}.`)
-  fs.ensureDirSync(placeDataPath)
 
   //
   // Create keys from the passphrase and persist the public keys
@@ -180,11 +176,11 @@ async function create (domain, client, placePath, clientPath) {
   spinner.text = 'Generating keys…'
   spinner.start()
 
-  const publicKeys = await generatePublicKeys(placeDomain, passphrase)
+  const publicKeys = await generatePublicKeys(domain, passphrase)
 
   spinner.stopAndPersist({ symbol: ' ✔️ ', text: 'Public keys generated.' })
 
-  const publicKeysPath = path.join(placeDataPath, 'public-keys.json')
+  const publicKeysPath = path.join(placePath, 'public-keys.json')
 
   fs.writeFileSync(publicKeysPath, `${JSON.stringify(publicKeys, null, 2)}\n`)
 
@@ -196,28 +192,30 @@ async function create (domain, client, placePath, clientPath) {
   // Derive SSH key from the passphrase.
   // TODO
 
+  // Clone the client.
+  // TODO
 
   //
   // Create the git repository.
   //
 
-  spinner.text = 'Initialising source code repository…'
-  spinner.start()
+  // spinner.text = 'Initialising source code repository…'
+  // spinner.start()
 
-  // Initialise the git repository.
-  await git.init({ fs, dir: placePath})
+  // // Initialise the git repository.
+  // await git.init({ fs, dir: placePath})
 
-  // Add remotes for the domain name (as derived from the folder name), localhost (for local testing), Local Area Network IP address (for same LAN testing), and hostname (for staging via PageKite, etc.).
-  await git.addRemote ({ fs, dir: placePath, remote: 'origin', url: `https://${placeDomain}/source/self`})
-  await git.addRemote ({ fs, dir: placePath, remote: 'localhost', url: 'https://localhost/source/self'})
-  await git.addRemote ({ fs, dir: placePath, remote: 'hostname', url: `https://${os.hostname()}/source/self`})
+  // // Add remotes for the domain name (as derived from the folder name), localhost (for local testing), Local Area Network IP address (for same LAN testing), and hostname (for staging via PageKite, etc.).
+  // await git.addRemote ({ fs, dir: placePath, remote: 'origin', url: `https://${placeDomain}/source/self`})
+  // await git.addRemote ({ fs, dir: placePath, remote: 'localhost', url: 'https://localhost/source/self'})
+  // await git.addRemote ({ fs, dir: placePath, remote: 'hostname', url: `https://${os.hostname()}/source/self`})
 
-  const localAreaNetworkInterfaces = allLocalInterfaces().filter(value => value !== '127.0.0.1')
-  if (localAreaNetworkInterfaces.length > 0) {
-    await git.addRemote ({ fs, dir: placePath, remote: 'ip', url: `https://${localAreaNetworkInterfaces[0]}/source/self`})
-  }
+  // const localAreaNetworkInterfaces = allLocalInterfaces().filter(value => value !== '127.0.0.1')
+  // if (localAreaNetworkInterfaces.length > 0) {
+  //   await git.addRemote ({ fs, dir: placePath, remote: 'ip', url: `https://${localAreaNetworkInterfaces[0]}/source/self`})
+  // }
 
-  spinner.stopAndPersist({ symbol: ' ✔️ ', text: 'Source code repository initialised.' })
+  // spinner.stopAndPersist({ symbol: ' ✔️ ', text: 'Source code repository initialised.' })
 }
 
 export default create
