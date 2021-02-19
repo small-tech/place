@@ -23,89 +23,21 @@ import generateEFFDicewarePassphrase from 'eff-diceware-passphrase'
 import session25519 from 'session25519'
 import crypto from 'crypto'
 
-async function create (args) {
+async function create (domain, client, placePath, clientPath) {
 
   Place.logAppNameAndVersion()
-
-  let folder = '.'
-  if (args.positional.length === 1) {
-    folder = args.positional[0]
-  }
-
-  const placePath = path.resolve(folder)
-
-  const lastPathSeparator = placePath.lastIndexOf(path.sep)
-  const placeDomain = placePath.slice(lastPathSeparator + 1)
-  const placePathParent = placePath.slice(0, lastPathSeparator)
 
   //
   // Safety checks: let’s not overwrite anything that might
   // already exist without asking.
   //
 
-  if (!fs.existsSync(placePathParent)) {
-    console.log(` ❌️ Parent folder ${chalk.yellow(placePathParent)} does not exist.`)
-    console.log(chalk.hsl(329,100,50)('\n    Refusing to continue.'))
-    process.exit(1)
-  }
-
-  let promptForTemplate = true
-
   // If there is already content in the place path, let’s ask if we should
   // continue and also flag that we shouldn’t install a new template (as that
   // would override the content).
   if (fs.existsSync(placePath)) {
-    if (fs.readdirSync(placePath).length !== 0) {
-      console.log(` ❌️ Place at ${chalk.yellow(placePath)} is not empty.`)
-
-      const confirmNonEmptyPlacePath = await inquirer.prompt([
-        {
-          type: 'confirm',
-          name: 'ok',
-          prefix: ' 🙋',
-          message: 'Continuing will not overwrite this content. Continue?',
-          default: true
-        }
-      ])
-
-      if (confirmNonEmptyPlacePath.ok) {
-        // There is existing content in the folder, flag that we should not
-        // ask to install a template (which would corrupt/overwrite it).
-        promptForTemplate = false
-        console.log(` ✔️  Will maintain existing content in ${chalk.yellow(placeDomain)} and not prompt for template installation.`)
-      } else {
-        console.log('\n ❌️ Aborting!')
-        console.log(chalk.hsl(329,100,50)('\n    Goodbye.'))
-        process.exit(1)
-      }
-    }
-  }
-
-  // Do not overwrite place data path if it exists without asking first.
-  const placeDataPath = path.join(Place.settingsDirectory, placeDomain)
-
-  if (fs.existsSync(placeDataPath)) {
-    console.log(` ⚠️  There is existing data and settings for ${chalk.yellow(placeDomain)} at ${chalk.yellow(placeDataPath)}.`)
-
-    const confirmOverwriteOfPlaceData = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'ok',
-        prefix: ' 🙋',
-        message: 'Continuing will overwrite this data. Are you sure?',
-        default: false
-      }
-    ])
-
-    if (confirmOverwriteOfPlaceData.ok) {
-      // Remove the existing data directory.
-      fs.removeSync(placeDataPath)
-      console.log(` ✔️  Existing data and settings for ${chalk.yellow(placeDomain)} deleted.`)
-    } else {
-      console.log('\n ❌️ Aborting!')
-      console.log(chalk.hsl(329,100,50)('\n    Goodbye.'))
-      process.exit(1)
-    }
+    console.log(` ❌️ Place at ${chalk.yellow(placePath)} already exists. Refusing to continue.`)
+    process.exit(1)
   }
 
   //
@@ -140,26 +72,26 @@ async function create (args) {
     ])
   } while (passphraseConfirmation.ok === false)
 
-  // Get the rest of the details (domain, template, etc.)
+  // Get the client
 
   const details = await inquirer
   .prompt([
     {
       type: 'list',
-      name: 'template',
+      name: 'client',
       prefix: ' 🙋',
       message: 'Template',
-      choices: ['Default', 'Meep', 'Custom'],
-      when: promptForTemplate
+      choices: ['Small Web Reference Client (Henry)', 'Small Web Social Network (Meep)', 'Small Web Host (Basil)', 'Other'],
+      when: client === undefined
     },
     {
       type: 'input',
       prefix: ' 🙋',
-      name: 'customTemplate',
-      message: 'Custom template URL',
-      default: 'https://place.small-web.org/template/default',
+      name: 'customClient',
+      message: 'Client git distribution URL',
+      default: 'https://source.small-web.org/small-web/henry-dist',
       when: function (details) {
-        return details.template === 'Custom'
+        return details.client === 'Other'
       },
       validate: function (value) {
         return value.startsWith('https://') || 'Must start with https://'
@@ -167,8 +99,26 @@ async function create (args) {
     }
   ])
 
-  if (details.template === undefined) {
-    details.template = 'None (will keep existing content in folder)'
+  if (details.client) {
+    switch (details.client) {
+      case 'Small Web Reference Client (Henry)':
+        client = 'https://source.small-web.org/small-web/henry-dist'
+        break
+      case 'Small Web Social Network (Meep)':
+        client = 'https://source.small-web.org/small-web/meep-dist'
+        break
+      case 'Small Web Host (Basil)':
+        client = 'https://source.small-web.org/small-web/basil-dist'
+        break
+      default:
+        // Custom URL
+        client = details.client
+    }
+  }
+
+  // Default to Small Web Refence Client (Henry)
+  if (client === undefined) {
+    client = 'https://source.small-web.org/small-web/henry-dist'
   }
 
   // Show the summary and get confirmation before starting the process.
@@ -177,17 +127,15 @@ async function create (args) {
   console.log('    Summary')
   console.log('    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
   console.log('')
+  console.log(`    Domain    : ${domain}`)
   console.log(`    Folder    : ${placePath}`)
-  console.log(`    Domain    : ${placeDomain} ⃰`)
-  console.log(`    Template  : ${details.customTemplate || details.template}`)
+  console.log(`    Client    : ${client}`)
   console.log('')
   console.log('    Passphrase: ')
   console.log('')
   console.log(`    ${passphrase}`)
   console.log('')
   console.log(chalk.italic(chalk.yellow('    (Please make sure you save your passphrase in your password manager.)')))
-  console.log('')
-  console.log(chalk.italic('    ⃰ The domain is automatically derived from the folder name.'))
   console.log('    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
   console.log('')
 
@@ -209,6 +157,8 @@ async function create (args) {
   }
 
   console.log('\n ✨️ Creating your Small Web place…\n')
+
+  process.exit()
 
   // Make sure the path exists.
   fs.ensureDirSync(placePath)

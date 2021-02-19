@@ -88,7 +88,6 @@ If no arguments are specified, runs the place using the settings used on the pre
 
     If not specified, Place defaults to serving the Small Web Refrence Client (Henry).
 
-
    - `--at-localhost`: (default) serve the place at `https://localhost`.
 
      (It will also be automatically served from your local IP so you can hit it from anywhere on your LAN).

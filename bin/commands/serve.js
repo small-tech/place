@@ -15,17 +15,27 @@
 //////////////////////////////////////////////////////////////////////
 
 import fs from 'fs'
-import pathModule from 'path'
+import path from 'path'
 import chalk from 'chalk'
 import inquirer from 'inquirer'
 import create from '../lib/create.js'
+import os from 'os'
+
+import ensure from '../lib/ensure.js'
+import status from '../lib/status.js'
+import tcpPortUsed from 'tcp-port-used'
+import clr from '../../lib/clr.js'
+import errors from '../../lib/errors.js'
+import Place from '../../index.js'
+
+import crossPlatformHostname from '@small-tech/cross-platform-hostname'
+
 import help from './help.js'
 
 // Note: requires are at the bottom to avoid a circular reference as ../../index (Place)
 // ===== also requires this module.
 // import generateContent from '../lib/generate-content'
 
-const DOMAIN = 'domain'
 const ALIASES = 'aliases'
 
 // This will only show errors in the access log (HTTP response codes 4xx and 5xx).
@@ -42,69 +52,91 @@ const SKIP_DOMAIN_REACHABILITY_CHECK = 'skip-domain-reachability-check'
 // Internal: used for pre-flight check to ensure the server can launch before creating a daemon.
 const EXIT_AFTER_LAUNCH = 'exit-after-launch'
 
-let global = null
-let port = null
-let path = null
+// A place is always served from port 443.
+const port = 443
+
+let domain = null
+let client = null
+let placePath = null
+let clientPath = null
+let global = false
 
 async function serve (args) {
-
-  // We repeat the assignment to null here to ensure these variables are null
+  // We repeat the assignments to null here to ensure these variables are null
   // in case the server was restarted and the module itself was cached.
-  global = null
-  port = null
-  path = null
+  domain = null
+  client = null
+  placePath = null
+  clientPath = null
+  global = false
 
-  if (args.positional.length > 2) {
-    syntaxError('Serve command has maximum of two arguments (what to serve and where to serve it).')
+  switch (args.positional.length) {
+    case 0:
+      // No domain specified, default to hostname.
+      domain = crossPlatformHostname
+      break;
+    case 1:
+      domain = args.positional[0]
+      break;
+    default:
+      syntaxError('Serve command takes at most one argument (the domain to serve).')
   }
 
-  // Parse positional arguments.
-  args.positional.forEach(arg => {
-    if (arg.startsWith('@')) {
-      // Parse host.
-      let _host = arg
-      const multipleHostDefinitionsErrorMessage = 'Multiple host definitions encountered. Please only use one.'
+  client = args.named['client']
 
-      // Parse port and update host accordingly if a port is provided.
-      // e.g., @localhost:999
-      if (arg.includes(':')) {
-        const hostAndPort = arg.split(':')
-        const hasCorrectNumberOfColons = hostAndPort.length === 2
-        if (!hasCorrectNumberOfColons) {
-          syntaxError('Host definition syntax can only contain one colon: @localhost:port. Default: @localhost:443')
-        }
+  placePath = path.join(os.homedir(), domain)
+  clientPath = path.join(placePath, 'client')
 
-        _host = hostAndPort[0]
-        const _port = hostAndPort[1]
+  if (args.named['--at-localhost'] && args.named['--at-hostname']) {
+    syntaxError('Please specify either --at-localhost or at-hostname, not both.')
+  }
 
-        if (port === null) {
-          port = ensurePort(_port)
-        } else {
-          syntaxError(multipleHostDefinitionsErrorMessage)
-        }
+  global = (args.named['at-hostname'] !== undefined)
+
+  console.log('Serve')
+  console.log('=====')
+  console.log('Domain: ', domain)
+  console.log('Place path: ', placePath)
+  console.log('Client: ', client)
+  console.log('Client path: ', clientPath)
+  console.log('Global: ', global)
+
+  //
+  // Check if place has been initialised yet.
+  // If not, run the creation process.
+  //
+
+  if (!fs.existsSync(placePath)) {
+
+    // TODO: Check if --public-signing-key and --public-encryption-key are provided.
+    // If so, do not run the interactive routine as we have all the information we need to
+    // create the place.
+
+    Place.logAppNameAndVersion()
+    console.log(` ℹ️  A place does not yet exist for ${chalk.yellow(domain)}`)
+
+    const confirmCreate = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'create',
+        prefix: ' 🙋',
+        message: `Create a new place at ${chalk.green(path.join(os.homedir(), placePath))}?`,
+        default: true
       }
+    ])
 
-      // Update global flag based on host type.
-      if (global === null) {
-        global = isHostGlobal(_host)
-      } else {
-        syntaxError(multipleHostDefinitionsErrorMessage)
-      }
-    } else {
-      // Since the positional argument doesn’t start with an @,
-      // it must be the name of the directory to serve.
-      if (path === null) {
-        path = arg
-      } else {
-        syntaxError('Two folders found to serve. Please only supply one.')
-      }
+    if (!confirmCreate.create) {
+      console.log('\n ❌️ Aborting!')
+      console.log(chalk.hsl(329,100,50)('\n    Goodbye.'))
+      process.exit(1)
     }
-  })
 
-  // Add defaults for any arguments not provided.
-  global = global === null ? false : global
-  port = port === null ? 443 : port
-  path = path === null ? null : path
+    // Create the place before continuing to serve it.
+    await create(domain, client, placePath, clientPath)
+
+  }
+
+  process.exit()
 
   //
   // Check if place has been initialised yet.
@@ -146,9 +178,6 @@ async function serve (args) {
   //
   // Parse named arguments.
   //
-
-  // Domain.
-  const domain = args.named[DOMAIN]
 
   // Aliases.
   const _aliases = args.named[ALIASES]
@@ -201,7 +230,7 @@ async function serve (args) {
 
       let options = {
         domain,
-        path,
+        clientPath,
         port,
         global,
         aliases,
@@ -257,14 +286,6 @@ function throwError(errorMessage) {
   throw new Error(`Error: ${errorMessage}`)
 }
 
-function isHostGlobal(host) {
-  const isValidHost = ['@localhost', '@hostname'].includes(host)
-  if (!isValidHost) {
-    syntaxError(`Invalid host: ${host}. Host should either be @localhost or @hostname. Default: @localhost`)
-  }
-  return (host === '@hostname')
-}
-
 // Ensures that port is valid before returning it.
 function ensurePort (port) {
   // If a port is specified, use it. Otherwise use the default port (443).
@@ -286,15 +307,4 @@ function ensurePort (port) {
   return port
 }
 
-
 export default serve
-
-// Note: requires are at the bottom to avoid a circular reference as ../../index (Place)
-// ===== also requires this module.
-
-import ensure from '../lib/ensure.js'
-import status from '../lib/status.js'
-import tcpPortUsed from 'tcp-port-used'
-import clr from '../../lib/clr.js'
-import errors from '../../lib/errors.js'
-import Place from '../../index.js'
