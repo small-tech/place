@@ -437,11 +437,8 @@ class Place {
       throw new errors.InvalidPathToServeError(`${clr(this.pathToServe, 'yellow')} is a file. Place can only serve directories.`)
     }
 
-    // Async
-    // await this.addHugoSupport()
     await this.appAddDynamicRoutes()
     this.appAddStaticRoutes()
-    this.appAddWildcardRoutes()
 
     // Continue configuring the rest of the app routes.
     this.addCustomErrorPagesSupport()
@@ -525,7 +522,6 @@ class Place {
     if (this.routesJsFile !== undefined) {
       this.createWebSocketServer()
       const routesJSFilePath = path.resolve(this.routesJsFile)
-      // decache(routesJSFilePath)
       // Ensure we are loading a fresh copy in case it has changed.
       const cacheBustingRoutesJSFilePath = `${routesJSFilePath}?update=${Date.now()}`
       ;(await import(cacheBustingRoutesJSFilePath)).default(this.app)
@@ -1028,9 +1024,11 @@ class Place {
     }[event])
   }
 
-  // Creates a file watcher to restart the server if a dynamic or wildcard route changes.
-  // (Changes to static files do not cause a server restart and are handled by the instant module
-  // with live reload.)
+  // Creates a file watcher to restart the server if a dynamic route changes.
+  //
+  // Note: Changes to the client being served do not restart the server. Please handle hot module replacement
+  // or hot reload yourselves in your client project during development. For an example, using Snowpack,
+  // please the Small Web Reference Client (Henry).
   //
   // Note: Chokidar appears to have an issue where changes are no longer picked up if
   // ===== a created folder is then removed. This should not be a big problem in actual
@@ -1038,22 +1036,8 @@ class Place {
   //       event, it gets triggered with a 'rename' when a removed/recreated folder
   //       is affected.) See: https://github.com/paulmillr/chokidar/issues/404#issuecomment-666669336
   createFileWatcher () {
-
-    // Workaround for Place.js issue #227: https://source.small-tech.org/site.js/app/-/issues/227
-    // (Place forked from Place.js.)
-    //
-    // When the app is wrapped with Nexe, if the path to serve is the current path, Chokidar doesn’t pick up
-    // changes (e.g., to ./**/*). However, it does if a relative path is specified. So, as a workaround, we target
-    // ../<name of current folder>/**/* instead.
-    // (This also means we can look for changes to /.dynamic and /.wildcard instead of just .dynamic and .wildcard
-    // and this gives us a little bit more safety in case those terms are found as part of a file name somewhere.)
-    const relativePath = this.pathToServe === '.' ? (() => {
-      const pathFragments = path.resolve('.').split(path.sep)
-      const currentDirectoryName = pathFragments[pathFragments.length - 1]
-      return `../${currentDirectoryName}`
-    })() : this.pathToServe
-
-    const fileWatchPath = `${relativePath.replace(/\\/g, '/')}/**/*`
+    const dynamicRoutesDirectory = path.join(__dirname, 'routes')
+    const fileWatchPath = `${dynamicRoutesDirectory.replace(/\\/g, '/')}/**/*`
 
     this.app.__fileWatcher = chokidar.watch(fileWatchPath, {
       persistent: true,
@@ -1061,98 +1045,12 @@ class Place {
     })
 
     this.app.__fileWatcher.on ('all', async (event, file) => {
-      if (file.includes('/.dynamic')) {
-        //
-        // Dynamic route change.
-        //
-        this.log(`   🔭    ❨Place❩ Dynamic route change: ${clr(`${this.prettyFileWatcherEvent(event)}`, 'green')} (${clr(file, 'cyan')}).`)
-        this.log('\n   🔭    ❨Place❩ Requesting restart…\n')
-        await this.restartServer()
-      } else if (file.includes('/.wildcard')) {
-        //
-        // Wildcard route change.
-        //
-        this.log(`   🔭    ❨Place❩ Wildcard route change: ${clr(`${this.prettyFileWatcherEvent(event)}`, 'green')} (${clr(file, 'cyan')}).`)
-        this.log('\n   🔭    ❨Place❩ Requesting restart…\n')
-        await this.restartServer()
-      }
+      this.log(`   🔭    ❨Place❩ Route change: ${clr(`${this.prettyFileWatcherEvent(event)}`, 'green')} (${clr(file, 'cyan')}).`)
+      this.log('\n   🔭    ❨Place❩ Requesting restart…\n')
+      await this.restartServer()
     })
 
-    this.log('   🔭    ❨Place❩ Watching for changes to dynamic and wildcard routes.')
-  }
-
-
-  // Add wildcard routes.
-  //
-  // Wildcard routes are static routes where any path under https://your.site/x will route to .wildcard/x/index.html
-  // if that file exists. So, for example, https://your.site/x/y, https://your.site/x/y/z, etc., will all route to the
-  // same static file. Use this if you want to allow path-style arguments in your URLs but carry out client-side
-  // processing. This saves you from having to create .dynamic routes for that use case.
-  appAddWildcardRoutes () {
-    const wildcardRoutesDirectory = path.join(this.pathToServe, '.wildcard')
-
-    const wildcards = {}
-
-    if (fs.existsSync(wildcardRoutesDirectory)) {
-
-      fs.readdirSync(wildcardRoutesDirectory, {withFileTypes: true}).forEach(file => {
-        let wildcard = file.name
-
-        let wildcardFilePath
-        let wildcardFilePathPretty
-        if (file.isDirectory(wildcard)) {
-          wildcardFilePath = path.join(wildcardRoutesDirectory, wildcard, 'index.html')
-          wildcardFilePathPretty = `${wildcard}/index.html`
-        } else {
-          if (!wildcard.endsWith('.html')) {
-            this.log(`   ❗    ❨Place❩ Non-HTML file (${wildcard}) found in wildcards directory, ignoring.`)
-            return // from forEach.
-          } else {
-            wildcardFilePath = path.join(wildcardRoutesDirectory, wildcard)
-            wildcardFilePathPretty = wildcard
-            wildcard = wildcard.replace('.html', '')
-          }
-        }
-
-        if (fs.existsSync(wildcardFilePath)) {
-          this.log(`   🃏    ❨Place❩ Serving wildcard route: ${clr(`https://${this.prettyLocation()}/${wildcard}/**/*`, 'green')} → ${clr(`/.wildcard/${wildcardFilePathPretty}`, 'cyan')}`)
-
-          // Read the HTML content and inject some javascript to make it easy to access the route
-          // name and the arguments from window.route and and window.arguments.
-          wildcards[wildcard] = fs.readFileSync(wildcardFilePath, 'utf-8').replace('<body>', `
-            <body>
-            <script>
-              // Place: add window.routeName and window.arguments objects to wildcard route.
-              __place__pathFragments =  document.location.pathname.split('/')
-              window.route = __place__pathFragments[1]
-              window.arguments = __place__pathFragments.slice(2).filter(value => value !== '')
-              delete __place__pathFragments
-            </script>
-          `)
-
-          this.app.use(`/${wildcard}`, (() => {
-            // Capture the current wildcard
-            const __wildcard = wildcard
-            return (request, response, next) => {
-              const pathFragments = request.path.split('/')
-              if (pathFragments.length >= 2 && pathFragments[1] !== '') {
-                // OK, we have a sub-path, so serve the wildcard.
-                response
-                  .type('html')
-                  .end(wildcards[__wildcard])
-              } else {
-                // No sub-path, ignore this request.
-                next()
-              }
-            }
-          })())
-        } else {
-          // We found a directory inside of the .wildcard directory but it doesn’t have an index.html
-          // file inside it with the content to serve. Warn the person.
-          this.log(`   ❗    ❨Place❩ Wilcard directory found at /.wildcard/${wildcard} but there is no index.html inside it. Ignoring…`)
-        }
-      })
-    }
+    this.log('   🔭    ❨Place❩ Watching for changes to dynamic routes.')
   }
 
   // Add dynamic routes. These are akin to the DotJS conventions as used by Site.js
