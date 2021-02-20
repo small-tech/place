@@ -55,7 +55,6 @@
     "@small-tech/cross-platform-hostname": "^1.0.0",
     "@small-tech/express-ws": "^1.0.0",
     "@small-tech/https": "^2.1.0",
-    "@small-tech/instant": "^1.1.0",
     "@small-tech/jsdb": "^1.1.5",
     "@small-tech/web-routes-from-files": "^3.0.1",
     "ansi-escape-sequences": "^4.1.0",
@@ -89,7 +88,6 @@
     "tweetnacl-util": "^0.15.1"
   },
   "devDependencies": {
-    "nexe": "https://github.com/aral/nexe#dependency-updates",
     "nyc": "^15.1.0",
     "tap-nyc": "^1.0.3",
     "tap-spec": "https://github.com/small-tech/tap-spec",
