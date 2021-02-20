@@ -375,7 +375,6 @@ class Place {
 
     this.appAddTest500ErrorPage()
 
-    this.addPublicKeysRoute()
     this.appAddGitRoutes()
   }
 
@@ -818,20 +817,6 @@ class Place {
         next()
       }
     })
-  }
-
-  // Add keys route
-  addPublicKeysRoute () {
-    // TODO: Refactor; remove redundancy with appAddGitRoutes()
-    this.app.use((request, response, next) => {
-      if (request.path === '/keys') {
-        response.json(Place.publicKeys)
-      } else {
-        next()
-      }
-    })
-
-    this.log(`   🔑️    ❨Place❩ Serving public keys at /keys`)
   }
 
   // Add git server functionality
