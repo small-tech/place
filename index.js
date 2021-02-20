@@ -47,6 +47,8 @@ import Util from './lib/Util.js'
 import allowAllCors from './middleware/allow-all-cors.js'
 import logging from './middleware/logging.js'
 import gitServer from './middleware/git-server.js'
+import error404 from './middleware/error-404.js'
+import error500 from './middleware/error-500.js'
 
 // For compatibility with legacy CommonJS code.
 import { createRequire } from 'module'
@@ -165,15 +167,6 @@ class Place {
 
       Place.#appNameAndVersionAlreadyLogged = true
     }
-  }
-
-  // Default error pages.
-  static default404ErrorPage(missingPath) {
-    return `<!doctype html><html lang="en" style="font-family: sans-serif; background-color: #eae7e1"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Error 404: Not found</title></head><body style="display: grid; align-items: center; justify-content: center; height: 100vh; vertical-align: top; margin: 0;"><main><h1 style="font-size: 16vw; color: black; text-align:center; line-height: 0.25">4🤭4</h1><p style="font-size: 4vw; text-align: center; padding-left: 2vw; padding-right: 2vw;"><span>Could not find</span> <span style="color: grey;">${missingPath}</span></p></main></body></html>`
-  }
-
-  static default500ErrorPage(errorMessage) {
-    return `<!doctype html><html lang="en" style="font-family: sans-serif; background-color: #eae7e1"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Error 500: Internal Server Error</title></head><body style="display: grid; align-items: center; justify-content: center; height: 100vh; vertical-align: top; margin: 0;"><main><h1 style="font-size: 16vw; color: black; text-align:center; line-height: 0.25">5🔥😱</h1><p style="font-size: 4vw; text-align: center; padding-left: 2vw; padding-right: 2vw;"><span>Internal Server Error</span><br><br><span style="color: grey;">${errorMessage}</span></p></main></body></html>`
   }
 
   //
@@ -371,7 +364,6 @@ class Place {
     this.appAddStaticRoutes()
 
     // Continue configuring the rest of the app routes.
-    this.addCustomErrorPagesSupport()
 
     this.appAddTest500ErrorPage()
 
@@ -455,48 +447,13 @@ class Place {
       })
     }
 
-    // The error routes go at the very end.
+    // Note: ensure error roots remain added last.
 
-    //
     // 404 (Not Found) support.
-    //
-    this.app.use((request, response, next) => {
-      if (this.hasCustom404) {
-        // Enable basic template support for including the missing path.
-        const custom404WithPath = this.custom404.replace('THE_PATH', request.path)
+    this.app.use(error404(this.pathToServe))
 
-        // Enable relative links to work in custom error pages.
-        const custom404WithPathAndBase = custom404WithPath.replace('<head>', '<head>\n\t<base href="/404/">')
-
-        response.status(404).send(custom404WithPathAndBase)
-      } else {
-        // Send default 404 page.
-        response.status(404).send(Place.default404ErrorPage(request.path))
-      }
-    })
-
-    //
     // 500 (Server error) support.
-    //
-    this.app.use((error, request, response, next) => {
-      // Strip the Error: prefix from the message.
-      const errorMessage = error.toString().replace('Error: ', '')
-
-      // If there is a custom 500 path, serve that. The template variable
-      // THE_ERROR, if present on the page, will be replaced with the error description.
-      if (this.hasCustom500) {
-        // Enable basic template support for including the error message.
-        const custom500WithErrorMessage = this.custom500.replace('THE_ERROR', errorMessage)
-
-        // Enable relative links to work in custom error pages.
-        const custom500WithErrorMessageAndBase = custom500WithErrorMessage.replace('<head>', '<head>\n\t<base href="/500/">')
-
-        response.status(500).send(custom500WithErrorMessageAndBase)
-      } else {
-        // Send default 500 page.
-        response.status(500).send(Place.default500ErrorPage(errorMessage))
-      }
-    })
+    this.app.use(error500(this.pathToServe))
   }
 
 
@@ -760,31 +717,6 @@ class Place {
     const prettyPathToServe = this.pathToServe === '.' ? 'current directory' : this.pathToServe
     this.log(`   🎉    ❨Place❩ Serving ${clr(prettyPathToServe, 'cyan')} on ${clr(`https://${location}`, 'green')}`)
     this.showStatisticsUrl(location)
-  }
-
-
-  // Adds custom error page support for 404 and 500 errors.
-  addCustomErrorPagesSupport () {
-    //
-    // Check if a custom 404 page exists at the conventional paths. If it does, load it for use later.
-    //
-    const custom404Path = path.join(this.pathToServe, '404', 'index.html')
-    this.hasCustom404 = fs.existsSync(custom404Path)
-    this.custom404 = null
-    if (this.hasCustom404) {
-      this.custom404 = fs.readFileSync(custom404Path, 'utf-8')
-    }
-
-    //
-    // Check if a custom 500 page exists at the conventional path. If it does, load it for use later.
-    //
-
-    const custom500Path = path.join(this.pathToServe, '500', 'index.html')
-    this.hasCustom500 = fs.existsSync(custom500Path)
-    this.custom500 = null
-    if (this.hasCustom500) {
-      this.custom500 = fs.readFileSync(custom500Path, 'utf-8')
-    }
   }
 
 
