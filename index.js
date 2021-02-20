@@ -171,6 +171,7 @@ class Place {
   // Instance.
   //
 
+  // TODO: Update this comment for latest Place.
   // Creates a Site instance. Customise it by passing an options object with the
   // following properties (all optional):
   //
@@ -204,20 +205,13 @@ class Place {
       Place.hostname = options.domain
     }
 
-    // const _pathToServe = typeof options.path === 'string' ? options.path : '.'
-
-    // It is a common mistake to start the server in a .dynamic folder (or subfolder), etc.
-    // In these cases, try to recover and do the right thing.
-    // TODO: No longer necessary. Remove []
-    // const {pathToServe, absolutePathToServe} = Util.magicallyRewritePathToServeIfNecessary(options.path, _pathToServe)
-
     // TODO: These are the same now. Refactor.
     this.pathToServe = options.clientPath
     this.absolutePathToServe = this.pathToServe
 
     this.placePath = options.placePath
 
-    this.databasePath = path.join(this.placePath, '.db')
+    this.databasePath = path.join(this.placePath, 'database')
 
     // TODO: These will always be decided now. Refactor.
     this.port = typeof options.port === 'number' ? options.port : 443
