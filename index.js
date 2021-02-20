@@ -45,6 +45,9 @@ import asyncForEach from './lib/async-foreach.js'
 import errors from './lib/errors.js'
 import Util from './lib/Util.js'
 
+// Middleware
+import allowAllCors from './middleware/allow-all-cors.js'
+
 // For compatibility with legacy CommonJS code.
 import { createRequire } from 'module'
 const __dirname = new URL('.', import.meta.url).pathname
@@ -329,8 +332,9 @@ class Place {
     // Read in public keys.
     const placeKeysPath = path.join(this.placePath, 'public-keys.json')
 
+    // This should never happen.
     if (!fs.existsSync(placeKeysPath)) {
-      this.log(`\n   ❌    ${clr('❨Place❩ Error:', 'red')} Place keys file does not exist at ${placeKeysPath}. Have you run place create?\n`)
+      this.log(`\n   ❌    ${clr('❨Place❩ Error:', 'red')} Place keys file does not exist at ${placeKeysPath}. Have you created the place?\n`)
       process.exit(1)
     }
 
@@ -371,11 +375,7 @@ class Place {
     this.app.use(helmet())
 
     // Allow cross-origin requests. Wouldn’t be much of a peer-to-peer web without them ;)
-    this.app.use((req, res, next) => {
-      res.header('Access-Control-Allow-Origin', '*')
-      res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
-      next()
-    })
+    this.app.use(allowAllCors)
 
     // Statistics middleware (captures anonymous, ephemeral statistics).
     this.app.use(this.stats.middleware)
