@@ -177,7 +177,8 @@ async function serve (args) {
       // only supported on port 443 at the moment.)
       if (port === 443) {
         if (ensure.commandExists('systemctl')) {
-          if ({ isActive } = status()) {
+          const { isActive } = status()
+          if (isActive) {
             console.log(`\n   ❌    ${clr('❨Place❩ Error:', 'red')} Cannot start server. Place is already running as a daemon on port ${clr(port.toString(), 'cyan')}. Use the ${clr('stop', 'green')} command to stop it.\n`)
             process.exit(1)
           }
