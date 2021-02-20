@@ -418,127 +418,6 @@ class Place {
     this.app.get(this.stats.route, this.stats.view)
   }
 
-
-  // Auto detect and support hugo source directories if they exist.
-  // TODO: Either make this a generic addGeneratedContentSupport() method.
-  // ===== if necessary for Place or remove it altogether.
-  // async addHugoSupport() {
-
-  //   if (this.syncHost !== undefined) {
-  //     // If about to sync to a remote host, delete the .generated folder so that a full
-  //     // generation can happen as we’re about to deploy.
-  //     const generatedContentPath = path.join(this.absolutePathToServe, '.generated')
-  //     fs.removeSync(generatedContentPath)
-  //   }
-
-  //   // Hugo source folder names must begin with either
-  //   // .hugo or .hugo--. Anything after the first double-dash
-  //   // specifies a custom mount path (double dashes are converted
-  //   // to forward slashes when determining the mount path).
-  //   const hugoSourceFolderPrefixRegExp = /^.hugo(--)?/
-
-  //   const files = fs.readdirSync(this.absolutePathToServe)
-
-  //   for (const file of files) {
-  //     if (file.match(hugoSourceFolderPrefixRegExp)) {
-
-  //       const hugoSourceDirectory = path.join(this.absolutePathToServe, file)
-
-  //       let mountPath = '/'
-  //       // Check for custom mount path naming convention.
-  //       if (hugoSourceDirectory.includes('--')) {
-  //         // Double dashes are translated into forward slashes.
-  //         const fragments = hugoSourceDirectory.split('--')
-
-  //         // Discard the first '.hugo' bit.
-  //         fragments.shift()
-
-  //         const _mountPath = fragments.reduce((accumulator, currentValue) => {
-  //           return accumulator += `/${currentValue}`
-  //         }, /* initial value = */ '')
-
-  //         mountPath = _mountPath
-  //       }
-
-  //       if (fs.existsSync(hugoSourceDirectory)) {
-
-  //         const serverDetails = clr(`${file}${path.sep}`, 'green') + clr(' → ', 'cyan') + clr(`https://${this.prettyLocation()}${mountPath}`, 'green')
-  //         this.log(`   🎠    ❨Place❩ Starting Hugo server (${serverDetails})`)
-
-  //         if (this.hugo === null || this.hugo === undefined) {
-  //           this.hugo = new Hugo(path.join(Place.settingsDirectory, 'node-hugo'))
-  //         }
-
-  //         const sourcePath = path.join(this.pathToServe, file)
-  //         const destinationPath = `../.generated${mountPath}`
-
-  //         const localBaseURL = `https://localhost${this.port === 443 ? '' : `:${this.port}`}${mountPath}`
-  //         const globalBaseURL = `https://${Place.hostname}${mountPath}`
-  //         let baseURL = this.global ? globalBaseURL : localBaseURL
-
-  //         // If a syncHost is provided (because we are about to sync), that overrides the calculated base
-  //         // URL as we are generating the content not for localhost or the current machine’s hostname but
-  //         // for the remote machine’s host name.
-  //         let buildDrafts = true
-  //         if (this.syncHost !== undefined) {
-  //           baseURL = `https://${this.syncHost}`
-
-  //           // Also, if syncing to a remote host, do NOT build drafts as we do not want to publish drafts.
-  //           buildDrafts = false
-  //         }
-
-  //         // Start the server and await the end of the build process.
-  //         let hugoServerProcess, hugoBuildOutput
-  //         try {
-  //           const response = await this.hugo.serve(sourcePath, destinationPath, baseURL, buildDrafts)
-  //           hugoServerProcess = response.hugoServerProcess
-  //           hugoBuildOutput = response.hugoBuildOutput
-  //         } catch (error) {
-  //           let errorMessage = error
-
-  //           if (errorMessage.includes('--appendPort=false not supported when in multihost mode')) {
-  //             errorMessage = 'Hugo’s Multilingual Multihost mode is not supported in Place.'
-  //           }
-
-  //           this.log(`\n   ❌    ${clr('❨Place❩ Error:', 'red')} Could not start Hugo server. ${errorMessage}\n`)
-  //           process.exit(1)
-  //         }
-
-  //         // At this point, the build process is complete and the .generated folder should exist.
-
-  //         // Listen for standard output and error output on the server instance.
-  //         hugoServerProcess.stdout.on('data', (data) => {
-  //           const lines = data.toString('utf-8').split('\n')
-  //           lines.forEach(line => this.log(`${Place.HUGO_LOGO} ${line}`))
-  //         })
-
-  //         hugoServerProcess.stderr.on('data', (data) => {
-  //           const lines = data.toString('utf-8').split('\n')
-  //           lines.forEach(line => {
-  //             this.log(`${Place.HUGO_LOGO} [ERROR] ${line}`)
-
-  //             if (line.includes('panic: runtime error: index out of range [1] with length 1')) {
-  //               this.log('\n   📎    ❨Place❩ Looks like you configured Multilingual Multihost mode in Hugo. This is not supported.\n')
-  //             }
-  //           })
-  //         })
-
-  //         // Save a reference to all hugo server processes so we can
-  //         // close them later and perform other cleanup.
-  //         if (this.hugoServerProcesses === null || this.hugoServerProcesses === undefined) {
-  //           this.hugoServerProcesses = []
-  //         }
-  //         this.hugoServerProcesses.push(hugoServerProcess)
-
-  //         // Print the output received so far.
-  //         hugoBuildOutput.split('\n').forEach(line => {
-  //           this.log(`${Place.HUGO_LOGO} ${line}`)
-  //         })
-  //       }
-  //     }
-  //   }
-  // }
-
   // Middleware and routes that might (in the future) include an async generation step.
   // TODO: Refactor accordingly if we don’t end up using this.
   async configureAppRoutes () {
@@ -1088,27 +967,8 @@ class Place {
   // Add static routes.
   // (Note: directories that begin with a dot (hidden directories) will be ignored.)
   appAddStaticRoutes () {
-    // const instantOptions = { watch: ['html', 'js', 'css', 'svg', 'png', 'jpg', 'jpeg'] }
-
-    const roots = []
-
-    // Serve any generated static content (e.g., Hugo output) that might exist.
-    // const generatedStaticFilesDirectory = path.join(this.pathToServe, '.generated')
-    // if (fs.existsSync(generatedStaticFilesDirectory)) {
-    //   this.log(`   🎠    ❨Place❩ Serving generated static files.`)
-    //   roots.push(generatedStaticFilesDirectory)
-    // }
-
-    // TODO: Keep as array?
-
-    // Add the regular static web root.
-    roots.push(this.pathToServe)
-
-    roots.forEach(root => {
-      this.app.use(express.static(root))
-    })
+    this.app.use(express.static(this.pathToServe))
   }
-
 
   // Restarts the server.
   async restartServer () {
