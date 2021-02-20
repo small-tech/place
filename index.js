@@ -212,20 +212,18 @@ class Place {
       let message = [
         this.releaseChannel === this.RELEASE_CHANNEL.release || this.binaryVersion === '19481210233000' /* (dev) */ ? `` : `${prefix2}Place\n\n`
       ].concat(this.releaseChannelFormattedForConsole(prefix2)).concat([
-        `${prefix2}Created ${clr(this.humanReadableBinaryVersion, 'green')}\n`,
-        '\n',
-        `${prefix2}Version ${clr(`${this.binaryVersion}-${this.packageVersion}-${this.sourceVersion}-${this.platform}/${this.architecture}`, 'green')}\n`,
+        `${prefix2}Version ${clr(`${this.packageVersion}-${this.sourceVersion}-${this.platform}/${this.architecture}`, 'green')}\n`,
         `${prefix2}Node.js ${clr(`${process.version.replace('v', '')}`, 'green')}\n`,
-        '\n',
-        `${prefix2}Base    ${clr(`https://place.small-web.org/nexe/${process.platform}-${process.arch}-${process.version.replace('v', '')}`, 'cyan')}\n`,
         `${prefix2}Source  ${clr(`https://source.small-tech.org/place/app/-/tree/${this.sourceVersion}`, 'cyan')}\n\n`,
 
-        `${prefix1}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n`,
-        `${prefix1}┃ Like this? Fund Us!                       ┃\n`,
-        `${prefix1}┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫\n`,
-        `${prefix1}┃ We’re a tiny, independent not-for-profit. ┃\n`,
-        `${prefix1}┃ https://small-tech.org/fund-us            ┃\n`,
-        `${prefix1}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n`,
+        `${prefix2}Like this? Fund Us! https://small-tech.org/fund-us \n`,
+
+        // `${prefix1}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n`,
+        // `${prefix1}┃ Like this? Fund Us!                       ┃\n`,
+        // `${prefix1}┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫\n`,
+        // `${prefix1}┃ We’re a tiny, independent not-for-profit. ┃\n`,
+        // `${prefix1}┃ https://small-tech.org/fund-us            ┃\n`,
+        // `${prefix1}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n`,
       ])
 
       message = message.join('')

@@ -93,13 +93,13 @@ async function serve (args) {
 
   global = (args.named['at-hostname'] !== undefined)
 
-  console.log('Serve')
-  console.log('=====')
-  console.log('Domain: ', domain)
-  console.log('Place path: ', placePath)
-  console.log('Client: ', client)
-  console.log('Client path: ', clientPath)
-  console.log('Global: ', global)
+  // console.log('Serve')
+  // console.log('=====')
+  // console.log('Domain: ', domain)
+  // console.log('Place path: ', placePath)
+  // console.log('Client: ', client)
+  // console.log('Client path: ', clientPath)
+  // console.log('Global: ', global)
 
   //
   // Check if place has been initialised yet.
