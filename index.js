@@ -27,7 +27,6 @@ import enableDestroy from 'server-destroy'
 import moment from 'moment'
 import chokidar from 'chokidar'
 import prepareRequest from 'bent'
-import NodeGitServer from 'node-git-server'
 import chalk from 'chalk'
 
 import https from '@small-tech/https'
@@ -47,6 +46,7 @@ import Util from './lib/Util.js'
 // Middleware
 import allowAllCors from './middleware/allow-all-cors.js'
 import logging from './middleware/logging.js'
+import gitServer from './middleware/git-server.js'
 
 // For compatibility with legacy CommonJS code.
 import { createRequire } from 'module'
@@ -375,7 +375,8 @@ class Place {
 
     this.appAddTest500ErrorPage()
 
-    this.appAddGitRoutes()
+    this.app.use(gitServer(this.placePath))
+    this.log(`   🗄️     ❨Place❩ Serving source code repositories at /source/…`)
   }
 
   // Creates a web socket server.
@@ -428,7 +429,7 @@ class Place {
   // Finish configuring the app. These are the routes that come at the end.
   // (We need to add the WebSocket (WSS) routes after the server has been created).
   async endAppConfiguration () {
-    // Create the file watcher to watch for changes on dynamic and wildcard routes.
+    // Create the file watcher to watch for changes on dynamic routes.
     this.createFileWatcher()
 
     // If we need to load dynamic routes from a routesJS file, do it now.
@@ -677,11 +678,6 @@ class Place {
     this.goodbye = (done) => {
       this.log('\n   💃    ❨Place❩ Preparing to exit gracefully, please wait…')
 
-      // if (this.hugoServerProcesses) {
-      //   this.log('   🚮    ❨Place❩ Killing Hugo server processes.')
-      //   this.hugoServerProcesses.forEach(hugoServerProcess => hugoServerProcess.kill())
-      // }
-
       // Close all active connections on the server.
       // (This is so that long-running connections – e.g., WebSockets – do not block the exit.)
       this.server.destroy(() => {
@@ -801,57 +797,6 @@ class Place {
         next()
       }
     })
-  }
-
-  // Add git server functionality
-  appAddGitRoutes () {
-    // TODO: this check is no longer necessary. Confirm + remove.
-    if (!fs.existsSync(this.placePath)) {
-      this.log(`\n   ❌    ${clr('❨Place❩ Error:', 'red')} Place does not exist at ${this.placePath}. Have you run place create?\n`)
-      process.exit(1)
-    }
-
-    const gitServer = new NodeGitServer(this.placePath, {
-      autoCreate: true,
-      authenticate: ({type, repo, user}, next) => {
-        // console.log('Type', type)
-        if (type === 'push' || type === 'fetch') {
-          user((accountName, password) => {
-            // console.log('Authenticating:', accountName, password)
-            if (accountName === '42' && password === '42') {
-              next()
-            } else {
-              next('wrong password')
-            }
-          })
-        } else {
-          next()
-        }
-      }
-    })
-
-    gitServer.on('push', push => {
-      console.log(`   🗄️     ❨Place❩ Receiving git push: ${push.repo}/${push.commit} (${push.branch})`)
-      push.accept()
-    })
-
-    gitServer.on('fetch', fetch => {
-      console.log(`   🗄️     ❨Place❩ Serving git fetch: ${fetch.commit}`)
-      fetch.accept()
-    })
-
-    const gitHandler = gitServer.handle.bind(gitServer)
-
-    // Let the git server handle any calls to /source/…
-    this.app.use((request, response, next) => {
-      if (request.url.startsWith('/source/')) {
-        gitHandler(request, response)
-      } else {
-        next()
-      }
-    })
-
-    this.log(`   🗄️     ❨Place❩ Serving source code repositories at /source/…`)
   }
 
 
