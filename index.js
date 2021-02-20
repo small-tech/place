@@ -414,22 +414,6 @@ class Place {
         }
       }
 
-      // Ensure that the static route file watchers are removed.
-      if (this.app.__staticRoutes !== undefined) {
-        await new Promise((resolve, reject) => {
-          this.app.__staticRoutes.cleanUp(() => {
-            this.log('   🚮    ❨Place❩ Live reload file system watchers removed from static web routes on server close.')
-            resolve()
-          })
-        })
-      }
-
-      // Shut down the Snowpack server
-      if (this.snowpackServer !== undefined) {
-        this.log('   🚮    ❨Place❩ Shutting down Snowpack server.')
-        await this.snowpackServer.shutdown()
-      }
-
       if (globalThis._db) {
         this.log('   🚮    ❨Place❩ Closing database.')
         await globalThis._db.close()
