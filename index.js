@@ -900,6 +900,8 @@ class Place {
   // - we use regular instead of hidden directories (e.g., https instead of .https, wss instead of .wss, etc.)
   // - all our routes are loaded from our own routes/ folder
   //
+  // TODO: Remove routes.js support. We don’t need it for Place.
+  //
   // If there are errors in any of your dynamic routes, you will get 500 (server) errors.
   //
   // Each of the routing conventions are mutually exclusive and applied according to the following precedence rules:
