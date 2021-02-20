@@ -63,128 +63,69 @@ class Place {
   static #manifest = null
 
   //
-  // Manifest helpers. The manifest file is created by the build script and includes metadata such as the
-  // binary version (in calendar version format YYYYMMDDHHmmss), the package version (in semantic version format),
-  // the source version (the git hash of the commit that corresponds to the source code the binary was built from), and
-  // the release channel (alpha, beta, or release).
+  // Manifest helpers. The manifest is a relic from Site.js that includes metadata like the package version
+  // (in semantic version format), the source version (the git hash of the commit that corresponds to the
+  // source code), and the platform. Originally, these were set at build time. Currently, we’re calculating
+  // them at run time. TODO: evaluate and refactor accordingly.
   //
 
-  static RELEASE_CHANNEL = {
-    alpha  : 'alpha',
-    beta   : 'beta',
-    release: 'release',
-    npm: 'npm'
-  }
+  static generateManifest () {
+    // When running under Node (not wrapped as a binary), there will be no manifest file. So mock one.
+    const options = {shell: os.platform() === 'win32' ? 'powershell' : '/bin/bash', env: process.env}
 
-  static readAndCacheManifest () {
+    let sourceVersion
     try {
-      this.#manifest = JSON.parse(fs.readFileSync(new URL('manifest.json', import.meta.url), 'utf-8'))
+      const [silenceOutput1, silenceOutput2] = os.platform() === 'win32' ? ['', ''] : ['> /dev/null', '2>&1']
+      const command = `pushd ${__dirname} ${silenceOutput1}; git log -1 --oneline ${silenceOutput2}`
+      sourceVersion = childProcess.execSync(command, options).toString().match(/^[0-9a-fA-F]{7}/)[0]
     } catch (error) {
-      // When running under Node (not wrapped as a binary), there will be no manifest file. So mock one.
-      const options = {shell: os.platform() === 'win32' ? 'powershell' : '/bin/bash', env: process.env}
+      // We are not running from source.
+      sourceVersion = 'npm'
+    }
 
-      let sourceVersion
-      try {
-        const [silenceOutput1, silenceOutput2] = os.platform() === 'win32' ? ['', ''] : ['> /dev/null', '2>&1']
-        const command = `pushd ${__dirname} ${silenceOutput1}; git log -1 --oneline ${silenceOutput2}`
-        sourceVersion = childProcess.execSync(command, options).toString().match(/^[0-9a-fA-F]{7}/)[0]
-      } catch (error) {
-        // We are not running from source.
-        sourceVersion = 'npm'
-      }
-
-      // Note: we switch to __dirname because we need to if Place is running as a daemon from source.
-      this.#manifest = {
-        releaseChannel: 'npm',
-        // Note: the time is a guess based on the minutes at:
-        // http://undocs.org/en/A/PV.183 ;)
-        binaryVersion: '19481210233000',
-        packageVersion: (require(path.join(__dirname, 'package.json'))).version,
-        sourceVersion,
-        platform: {linux: 'linux', win32: 'windows', 'darwin': 'macOS'}[os.platform()],
-        architecture: os.arch()
-      }
+    // Note: we switch to __dirname because we need to if Place is running as a daemon from source.
+    this.#manifest = {
+      packageVersion: (require(path.join(__dirname, 'package.json'))).version,
+      sourceVersion,
+      platform: {linux: 'linux', win32: 'windows', 'darwin': 'macOS'}[os.platform()],
+      architecture: os.arch()
     }
   }
 
   static getFromManifest (key) {
     if (this.#manifest === null) {
-      this.readAndCacheManifest()
+      this.generateManifest()
     }
     return this.#manifest[key]
   }
 
-  static get releaseChannel () { return this.getFromManifest('releaseChannel') }
-  static get binaryVersion  () { return this.getFromManifest('binaryVersion')  }
   static get packageVersion () { return this.getFromManifest('packageVersion') }
   static get sourceVersion  () { return this.getFromManifest('sourceVersion')  }
   static get platform       () { return this.getFromManifest('platform')       }
   static get architecture   () { return this.getFromManifest('architecture')   }
 
-  static binaryVersionToHumanReadableDateString (binaryVersion) {
-    // Is this the dummy version that signals a development build?
-    if (binaryVersion === '19481210233000') {
-      return 'n/a (not running from binary release)'
-    }
-    const m = moment(binaryVersion, 'YYYYMMDDHHmmss')
-    return `${m.format('MMMM Do, YYYY')} at ${m.format('HH:mm:ss')}`
-  }
-
-  static get humanReadableBinaryVersion () {
-    if (this.#manifest === null) {
-      this.readAndCacheManifest()
-    }
-    return this.binaryVersionToHumanReadableDateString(this.#manifest.binaryVersion)
-  }
-
-  static releaseChannelFormattedForConsole (prefix = ' ') {
+  static logo (prefix = ' ') {
 
     const lightGreen = chalk.rgb(203,232,155)
     const midGreen = chalk.rgb(164, 199, 118)
     const darkGreen = chalk.rgb(0, 98, 91)
 
-    switch(this.releaseChannel) {
-
-      // Spells ALPHA in large red block letters.
-      case this.RELEASE_CHANNEL.alpha:
-        return [
-          `${prefix}${clr(' █████  ██      ██████  ██   ██  █████', 'red')}\n`,
-          `${prefix}${clr('██   ██ ██      ██   ██ ██   ██ ██   ██', 'red')}\n`,
-          `${prefix}${clr('███████ ██      ██████  ███████ ███████', 'red')}\n`,
-          `${prefix}${clr('██   ██ ██      ██      ██   ██ ██   ██', 'red')}\n`,
-          `${prefix}${clr('██   ██ ███████ ██      ██   ██ ██   ██', 'red')}\n`,
-          '\n'
-        ]
-
-      // Spells BETA in large yellow block letters.
-      case this.RELEASE_CHANNEL.beta:
-        return [
-          `${prefix}${clr('██████  ███████ ████████  █████', 'yellow')}\n`,
-          `${prefix}${clr('██   ██ ██         ██    ██   ██', 'yellow')}\n`,
-          `${prefix}${clr('██████  █████      ██    ███████', 'yellow')}\n`,
-          `${prefix}${clr('██   ██ ██         ██    ██   ██', 'yellow')}\n`,
-          `${prefix}${clr('██████  ███████    ██    ██   ██', 'yellow')}\n`,
-          '\n'
-        ]
-
-        default:
-          return [
-            chalk.hsl(329,100,90)(`${prefix}██████  ██       █████   ██████ ███████ `) + midGreen('      ███') + lightGreen('██████\n'),
-            chalk.hsl(329,100,80)(`${prefix}██   ██ ██      ██   ██ ██      ██     `) + midGreen('      ██') + darkGreen('█') + midGreen('██') + lightGreen('██████\n'),
-            chalk.hsl(329,100,70)(`${prefix}██████  ██      ███████ ██      █████  `) + midGreen('     ██') + darkGreen('███') + midGreen('██') + lightGreen('██████\n'),
-            chalk.hsl(329,100,60)(`${prefix}██      ██      ██   ██ ██      ██     `) + midGreen('    ██') + darkGreen('█████') + midGreen('██') + lightGreen('██████\n'),
-            chalk.hsl(329,100,50)(`${prefix}██      ███████ ██   ██  ██████ ███████`) + midGreen('   ██') + darkGreen('███████') + midGreen('██') + lightGreen('██████\n'),
-            '\n',
-            chalk.red('  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n'),
-            chalk.red('  ┃                            WARNING                           ┃\n'),
-            chalk.red('  ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫\n'),
-            chalk.red('  ┃ Place is pre-release and rapidly evolving. Things may be un- ┃\n'),
-            chalk.red('  ┃ implemented, incomplete or broken. Please feel free to play  ┃\n'),
-            chalk.red('  ┃ but we’re not currently looking for contributions or issues. ┃\n'),
-            chalk.red('  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n'),
-            '\n',
-          ]
-    }
+    return [
+      chalk.hsl(329,100,90)(`${prefix}██████  ██       █████   ██████ ███████ `) + midGreen('      ███') + lightGreen('██████\n'),
+      chalk.hsl(329,100,80)(`${prefix}██   ██ ██      ██   ██ ██      ██     `) + midGreen('      ██') + darkGreen('█') + midGreen('██') + lightGreen('██████\n'),
+      chalk.hsl(329,100,70)(`${prefix}██████  ██      ███████ ██      █████  `) + midGreen('     ██') + darkGreen('███') + midGreen('██') + lightGreen('██████\n'),
+      chalk.hsl(329,100,60)(`${prefix}██      ██      ██   ██ ██      ██     `) + midGreen('    ██') + darkGreen('█████') + midGreen('██') + lightGreen('██████\n'),
+      chalk.hsl(329,100,50)(`${prefix}██      ███████ ██   ██  ██████ ███████`) + midGreen('   ██') + darkGreen('███████') + midGreen('██') + lightGreen('██████\n'),
+      '\n',
+      chalk.red('  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n'),
+      chalk.red('  ┃                            WARNING                           ┃\n'),
+      chalk.red('  ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫\n'),
+      chalk.red('  ┃ Place is pre-release and rapidly evolving. Things may be un- ┃\n'),
+      chalk.red('  ┃ implemented, incomplete or broken. Please feel free to play  ┃\n'),
+      chalk.red('  ┃ but we’re not currently looking for contributions or issues. ┃\n'),
+      chalk.red('  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n'),
+      '\n',
+    ]
   }
 
   // Returns the cross-platform hostname (os.hostname() on Linux and macOS, special handling on Windows to return the
@@ -207,26 +148,15 @@ class Place {
     }
 
     if (!Place.#appNameAndVersionAlreadyLogged && !process.argv.includes('--dont-log-app-name-and-version')) {
-      let prefix1 = '  '
-      let prefix2 = '    '
+      const prefix = '    '
 
-      this.readAndCacheManifest()
+      this.generateManifest()
 
-      let message = [
-        this.releaseChannel === this.RELEASE_CHANNEL.release || this.binaryVersion === '19481210233000' /* (dev) */ ? `` : `${prefix2}Place\n\n`
-      ].concat(this.releaseChannelFormattedForConsole(prefix2)).concat([
-        `${prefix2}Version ${clr(`${this.packageVersion}-${this.sourceVersion}-${this.platform}/${this.architecture}`, 'green')}\n`,
-        `${prefix2}Node.js ${clr(`${process.version.replace('v', '')}`, 'green')}\n`,
-        `${prefix2}Source  ${clr(`https://source.small-tech.org/place/app/-/tree/${this.sourceVersion}`, 'cyan')}\n\n`,
-
-        `${prefix2}Like this? Fund Us! https://small-tech.org/fund-us \n`,
-
-        // `${prefix1}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n`,
-        // `${prefix1}┃ Like this? Fund Us!                       ┃\n`,
-        // `${prefix1}┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫\n`,
-        // `${prefix1}┃ We’re a tiny, independent not-for-profit. ┃\n`,
-        // `${prefix1}┃ https://small-tech.org/fund-us            ┃\n`,
-        // `${prefix1}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n`,
+      let message = this.logo(prefix).concat([
+        `${prefix}Version ${clr(`${this.packageVersion}-${this.sourceVersion}-${this.platform}/${this.architecture}`, 'green')}\n`,
+        `${prefix}Node.js ${clr(`${process.version.replace('v', '')}`, 'green')}\n`,
+        `${prefix}Source  ${clr(`https://source.small-tech.org/place/app/-/tree/${this.sourceVersion}`, 'cyan')}\n\n`,
+        `${prefix}Like this? Fund Us! https://small-tech.org/fund-us \n`,
       ])
 
       message = message.join('')
@@ -470,11 +400,11 @@ class Place {
     enableDestroy(this.server)
 
     this.server.on('close', async () => {
-      // Clear the auto update check interval.
-      if (this.autoUpdateCheckInterval !== undefined) {
-        clearInterval(this.autoUpdateCheckInterval)
-        this.log('   ⏰    ❨Place❩ Cleared auto-update check interval.')
-      }
+      // // Clear the auto update check interval.
+      // if (this.autoUpdateCheckInterval !== undefined) {
+      //   clearInterval(this.autoUpdateCheckInterval)
+      //   this.log('   ⏰    ❨Place❩ Cleared auto-update check interval.')
+      // }
 
       if (this.app.__fileWatcher !== undefined) {
         try {
@@ -786,46 +716,42 @@ class Place {
       // so they are safe to override).
       callback.apply(this, [this.server])
 
-      // Auto updates.
-      //
-      // If we’re running in production, set up a timer to periodically check for
-      // updates and perform them if necessary.
-      if (process.env.NODE_ENV === 'production') {
+      // TODO: Evaluate and re-implement auto-updates flow based on git for Place.
+      // // Auto updates.
+      // //
+      // // If we’re running in production, set up a timer to periodically check for
+      // // updates and perform them if necessary.
+      // if (process.env.NODE_ENV === 'production') {
 
-        const checkForUpdates = () => {
-          this.log('   🛰    ❨Place❩ Running auto update check…')
+      //   const checkForUpdates = () => {
+      //     this.log('   🛰    ❨Place❩ Running auto update check…')
 
-          const options = {env: process.env, stdio: 'inherit'}
+      //     const options = {env: process.env, stdio: 'inherit'}
 
-          let appReference = process.title
-          if (appReference.includes('node')) {
-            appReference = `${appReference} ${path.join(__dirname, 'bin', 'place')}`
-          }
-          const updateCommand = `${appReference} update --dont-log-app-name-and-version`
-          childProcess.exec(updateCommand, options, (error, stdout, stderr) => {
-            if (error !== null) {
-              this.log(`\n   ❌    ${clr('❨Place❩ Error:', 'red')} Could not check for updates.\n`, error)
-            } else {
-              this.log(stdout)
-            }
-          })
-        }
+      //     let appReference = process.title
+      //     if (appReference.includes('node')) {
+      //       appReference = `${appReference} ${path.join(__dirname, 'bin', 'place')}`
+      //     }
+      //     const updateCommand = `${appReference} update --dont-log-app-name-and-version`
+      //     childProcess.exec(updateCommand, options, (error, stdout, stderr) => {
+      //       if (error !== null) {
+      //         this.log(`\n   ❌    ${clr('❨Place❩ Error:', 'red')} Could not check for updates.\n`, error)
+      //       } else {
+      //         this.log(stdout)
+      //       }
+      //     })
+      //   }
 
-        this.log('   ⏰    ❨Place❩ Setting up auto-update check interval.')
-        // Regular and alpha releases check for updates every 6 hours.
-        // (You  should not be deploying servers using the alpha release channel.)
-        let hours = 6
-        let minutes = 60
-        if (Place.releaseChannel === Place.RELEASE_CHANNEL.beta) {
-          // Beta releases check for updates every 10 minutes.
-          hours = 1
-          minutes = 10
-        }
-        this.autoUpdateCheckInterval = setInterval(checkForUpdates, /* every */ hours * minutes * 60 * 1000)
+      //   this.log('   ⏰    ❨Place❩ Setting up auto-update check interval.')
+      //   // Regular and alpha releases check for updates every 6 hours.
+      //   // (You  should not be deploying servers using the alpha release channel.)
+      //   let hours = 6
+      //   let minutes = 60
+      //   this.autoUpdateCheckInterval = setInterval(checkForUpdates, /* every */ hours * minutes * 60 * 1000)
 
-        // And perform an initial check a few seconds after startup.
-        setTimeout(checkForUpdates, 3000)
-      }
+      //   // And perform an initial check a few seconds after startup.
+      //   setTimeout(checkForUpdates, 3000)
+      // }
     })
 
     return this.server
