@@ -1,6 +1,6 @@
 # ⛺ Place
 
-## A Small Web Protocol Server
+## Small Web Protocol Reference Server
 
 ```
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
