@@ -33,7 +33,7 @@
   "dependencies": {
     "@small-tech/cross-platform-hostname": "^1.0.0",
     "@small-tech/express-ws": "^1.0.0",
-    "@small-tech/https": "^2.1.0",
+    "@small-tech/https": "^2.1.1",
     "@small-tech/jsdb": "^1.1.5",
     "@small-tech/web-routes-from-files": "^3.0.1",
     "ansi-escape-sequences": "^4.1.0",
