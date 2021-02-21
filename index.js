@@ -60,49 +60,6 @@ class Place {
   //
 
   static #appNameAndVersionAlreadyLogged = false
-  static #manifest = null
-
-  //
-  // Manifest helpers. The manifest is a relic from Site.js that includes metadata like the package version
-  // (in semantic version format), the source version (the git hash of the commit that corresponds to the
-  // source code), and the platform. Originally, these were set at build time. Currently, we’re calculating
-  // them at run time. TODO: evaluate and refactor accordingly.
-  //
-
-  static generateManifest () {
-    // When running under Node (not wrapped as a binary), there will be no manifest file. So mock one.
-    const options = {shell: os.platform() === 'win32' ? 'powershell' : '/bin/bash', env: process.env}
-
-    let sourceVersion
-    try {
-      const [silenceOutput1, silenceOutput2] = os.platform() === 'win32' ? ['', ''] : ['> /dev/null', '2>&1']
-      const command = `pushd ${__dirname} ${silenceOutput1}; git log -1 --oneline ${silenceOutput2}`
-      sourceVersion = childProcess.execSync(command, options).toString().match(/^[0-9a-fA-F]{7}/)[0]
-    } catch (error) {
-      // We are not running from source.
-      sourceVersion = 'npm'
-    }
-
-    // Note: we switch to __dirname because we need to if Place is running as a daemon from source.
-    this.#manifest = {
-      packageVersion: (require(path.join(__dirname, 'package.json'))).version,
-      sourceVersion,
-      platform: {linux: 'linux', win32: 'windows', 'darwin': 'macOS'}[os.platform()],
-      architecture: os.arch()
-    }
-  }
-
-  static getFromManifest (key) {
-    if (this.#manifest === null) {
-      this.generateManifest()
-    }
-    return this.#manifest[key]
-  }
-
-  static get packageVersion () { return this.getFromManifest('packageVersion') }
-  static get sourceVersion  () { return this.getFromManifest('sourceVersion')  }
-  static get platform       () { return this.getFromManifest('platform')       }
-  static get architecture   () { return this.getFromManifest('architecture')   }
 
   static logo (prefix = ' ') {
 
@@ -127,35 +84,51 @@ class Place {
   // Returns the cross-platform hostname (os.hostname() on Linux and macOS, special handling on Windows to return the
   // full computer name, which can be a domain name and thus the equivalent of hostname on Linux and macOS).
   static get hostname () { return this._hostname ? this._hostname : crossPlatformHostname }
-
   static set hostname (domain) { this._hostname = domain }
 
   // This is the directory that settings and other persistent data is stored for Place.
   static get settingsDirectory () { return path.join(Util.unprivilegedHomeDirectory(), '.small-tech.org', 'place') }
 
-  static logAppNameAndVersion (compact = false) {
+  static sourceVersion () {
+    const options = {shell: os.platform() === 'win32' ? 'powershell' : '/bin/bash', env: process.env}
 
-    if (process.env.QUIET) {
+    let sourceVersion
+    try {
+      const [silenceOutput1, silenceOutput2] = os.platform() === 'win32' ? ['', ''] : ['> /dev/null', '2>&1']
+      const command = `pushd ${__dirname} ${silenceOutput1}; git log -1 --oneline ${silenceOutput2}`
+      sourceVersion = childProcess.execSync(command, options).toString().match(/^[0-9a-fA-F]{7}/)[0]
+    } catch (error) {
+      // We are not running from source.
+      sourceVersion = 'npm'
+    }
+
+    return sourceVersion
+  }
+
+  static logAppNameAndVersion () {
+
+    if (process.env.QUIET || Place.#appNameAndVersionAlreadyLogged || process.argv.includes('--dont-log-app-name-and-version')) {
       return
     }
 
-    if (!Place.#appNameAndVersionAlreadyLogged && !process.argv.includes('--dont-log-app-name-and-version')) {
-      const prefix = '    '
+    const prefix = '    '
 
-      this.generateManifest()
+    const sourceVersion = this.sourceVersion()
+    const packageVersion = (require(path.join(__dirname, 'package.json'))).version
+    const platform = {linux: 'linux', win32: 'windows', 'darwin': 'macOS'}[os.platform()]
+    const architecture = os.arch()
 
-      let message = this.logo(prefix).concat([
-        `${prefix}Version ${clr(`${this.packageVersion}-${this.sourceVersion} (${this.platform}/${this.architecture})`, 'green')}\n`,
-        `${prefix}Node.js ${clr(`${process.version.replace('v', '')}`, 'green')}\n`,
-        `${prefix}Source  ${clr(`https://source.small-tech.org/place/app/-/tree/${this.sourceVersion}`, 'cyan')}\n\n`,
-        `${prefix}Like this? Fund Us! https://small-tech.org/fund-us \n`,
-      ])
+    let message = this.logo(prefix).concat([
+      `${prefix}Version ${clr(`${packageVersion}-${sourceVersion} (${platform}/${architecture})`, 'green')}\n`,
+      `${prefix}Node.js ${clr(`${process.version.replace('v', '')}`, 'green')}\n`,
+      `${prefix}Source  ${clr(`https://source.small-tech.org/place/app/-/tree/${sourceVersion}`, 'cyan')}\n\n`,
+      `${prefix}Like this? Fund Us! https://small-tech.org/fund-us \n`,
+    ])
 
-      message = message.join('')
-      console.log(message)
-      Place.#appNameAndVersionAlreadyLogged = true
-    }
-  }
+    message = message.join('')
+    console.log(message)
+    Place.#appNameAndVersionAlreadyLogged = true
+}
 
   //
   // Instance.
