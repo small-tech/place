@@ -21,7 +21,6 @@ import http from 'http'
 
 import Graceful from 'node-graceful'
 import express from 'express'
-import bodyParser from 'body-parser'
 import helmet from 'helmet'
 import enableDestroy from 'server-destroy'
 import chokidar from 'chokidar'
@@ -29,9 +28,7 @@ import prepareRequest from 'bent'
 import chalk from 'chalk'
 
 import https from '@small-tech/https'
-import expressWebSocket from '@small-tech/express-ws'
 import crossPlatformHostname from '@small-tech/cross-platform-hostname'
-import getRoutes from '@small-tech/web-routes-from-files'
 import JSDB from '@small-tech/jsdb'
 
 import clr from './lib/clr.js'
@@ -40,6 +37,9 @@ import Stats from './lib/Stats.js'
 import asyncForEach from './lib/async-foreach.js'
 import errors from './lib/errors.js'
 import Util from './lib/Util.js'
+
+import addHttpsGetRoutes from './lib/add-https-get-routes.js'
+import createWebSocketServer from './lib/create-websocket-server.js'
 
 // Middleware
 import allowAllCors from './middleware/allow-all-cors.js'
@@ -352,20 +352,27 @@ class Place {
       throw new errors.InvalidPathToServeError(`${clr(this.pathToServe, 'yellow')} is a file. Place can only serve directories.`)
     }
 
-    await this.appAddDynamicRoutes()
-    this.appAddStaticRoutes()
+    // Add HTTPS GET routes.
+    const httpsGetRoutesDirectory = path.join(__dirname, 'routes', 'https')
+    await addHttpsGetRoutes(httpsGetRoutesDirectory, this.app)
+
+    // Middleware: static routes.
+    this.app.use(express.static(this.pathToServe))
 
     // Continue configuring the rest of the app routes.
 
-    this.appAddTest500ErrorPage()
+    // Middleware: To test a 500 error, hit /test-500-error
+    this.app.use((request, response, next) => {
+      if (request.path === '/test-500-error') {
+        throw new Error('Bad things have happened.')
+      } else {
+        next()
+      }
+    })
 
+    // Middleware: git server.
     this.app.use(gitServer(this.placePath))
     this.log(`   🗄️     ❨Place❩ Serving source code repositories at /source/…`)
-  }
-
-  // Creates a web socket server.
-  createWebSocketServer () {
-    expressWebSocket(this.app, this.server, { perMessageDeflate: false })
   }
 
   // Create the server. Use this first to create the server and add the routes later
@@ -416,28 +423,11 @@ class Place {
     // Create the file watcher to watch for changes on dynamic routes.
     this.createFileWatcher()
 
-    // If we need to load dynamic routes from a routesJS file, do it now.
-    if (this.routesJsFile !== undefined) {
-      this.createWebSocketServer()
-      const routesJSFilePath = path.resolve(this.routesJsFile)
-      // Ensure we are loading a fresh copy in case it has changed.
-      const cacheBustingRoutesJSFilePath = `${routesJSFilePath}?update=${Date.now()}`
-      ;(await import(cacheBustingRoutesJSFilePath)).default(this.app)
-    }
-
-    // If there are WebSocket routes, create a regular WebSocket server and
-    // add the WebSocket routes (if any) to the app.
-    if (this.wssRoutes !== undefined) {
-      this.createWebSocketServer()
-
-      await asyncForEach(this.wssRoutes, async route => {
-        this.log(`   ⛺    ❨Place❩ Adding WebSocket (WSS) route: ${route.path}`)
-        // decache(route.callback)
-        // Ensure we are loading a fresh copy in case it has changed.
-        const cacheBustingRouteCallback = `${route.callback}?update=${Date.now()}`
-        this.app.ws(route.path, (await import(cacheBustingRouteCallback)).default)
-      })
-    }
+    //
+    // Add web socket routes.
+    //
+    const wssRoutesDirectory = path.join(__dirname, 'routes', 'wss')
+    await createWebSocketServer(this.app, this.server, wssRoutesDirectory)
 
     // Note: ensure error roots remain added last.
 
@@ -712,24 +702,6 @@ class Place {
   }
 
 
-  // To test a 500 error, hit /test-500-error
-  appAddTest500ErrorPage () {
-    this.app.use((request, response, next) => {
-      if (request.path === '/test-500-error') {
-        throw new Error('Bad things have happened.')
-      } else {
-        next()
-      }
-    })
-  }
-
-
-  // Add static routes.
-  // (Note: directories that begin with a dot (hidden directories) will be ignored.)
-  appAddStaticRoutes () {
-    this.app.use(express.static(this.pathToServe))
-  }
-
   // Restarts the server.
   async restartServer () {
     if (process.env.NODE_ENV === 'production') {
@@ -815,160 +787,6 @@ class Place {
     })
 
     this.log('   🔭    ❨Place❩ Watching for changes to dynamic routes.')
-  }
-
-  // Add dynamic routes. These are akin to the DotJS conventions as used by Site.js
-  // (https://sitejs.org) but, unlike Site.js, since Place is not a generic
-  // server but a Small Web Protocol Server:
-  //
-  // - we use regular instead of hidden directories (e.g., https instead of .https, wss instead of .wss, etc.)
-  // - all our routes are loaded from our own routes/ folder
-  //
-  // TODO: Remove routes.js support. We don’t need it for Place.
-  //
-  // If there are errors in any of your dynamic routes, you will get 500 (server) errors.
-  //
-  // Each of the routing conventions are mutually exclusive and applied according to the following precedence rules:
-  //
-  // 1. Advanced _routes.js_-based advanced routing.
-  //
-  // 2. Separate folders for _https_ and _wss_ routes routing (the _https_ folder itself will apply
-  // precedence rules 3 and 4 internally).
-  //
-  // 3. Separate folders for _get_ and _post_ routes in HTTPS-only routing.
-  //
-  // 4. GET-only routing.
-  //
-  // For full details, please see the readme file.
-
-  async appAddDynamicRoutes () {
-    // Initially check if a dynamic routes directory exists. If it does not,
-    // we don’t need to take this any further.
-    const dynamicRoutesDirectory = path.join(__dirname, 'routes')
-
-    if (fs.existsSync(dynamicRoutesDirectory)) {
-      const addBodyParser = () => {
-        this.app.use(bodyParser.json())
-        this.app.use(bodyParser.urlencoded({ extended: true }))
-      }
-
-      // Attempts to load HTTPS routes from the passed directory,
-      // adhering to rules 3 & 4.
-      const loadHttpsRoutesFrom = async (httpsRoutesDirectory) => {
-        // Attempts to load HTTPS GET routes from the passed directory.
-        const loadHttpsGetRoutesFrom = async (httpsGetRoutesDirectory) => {
-          const httpsGetRoutes = getRoutes(httpsGetRoutesDirectory)
-
-          await asyncForEach(httpsGetRoutes, async route => {
-            this.log(`   ⛺    ❨Place❩ Adding HTTPS GET route: ${route.path}`)
-
-            // Ensure we are loading a fresh copy in case it has changed.
-            const cacheBustingRouteCallback = `${route.callback}?update=${Date.now()}`
-            // decache(route.callback)
-            try {
-              this.app.get(route.path, (await import(cacheBustingRouteCallback)).default)
-            } catch (error) {
-              if (error.message.includes('requires a callback function but got a [object Object]')) {
-                console.log(`\n   ❌    ${clr('❨Place❩ Error:', 'red')} Could not find callback in route ${route.path}\n\n         ❨Place❩ ${clr('Hint:', 'green')} Make sure your DotJS routes include a ${clr('module.exports = (request, response) => {}', 'cyan')} declaration.\n`)
-              } else {
-                console.log(`\n   ❌    ${clr('❨Place❩ Error:', 'red')} ${error}`)
-              }
-              process.exit()
-            }
-          })
-        }
-
-        // Check if separate .get and .post route directories exist.
-        const httpsGetRoutesDirectory = path.join(httpsRoutesDirectory, 'get')
-        const httpsPostRoutesDirectory = path.join(httpsRoutesDirectory, 'post')
-        const httpsGetRoutesDirectoryExists = fs.existsSync(httpsGetRoutesDirectory)
-        const httpsPostRoutesDirectoryExists = fs.existsSync(httpsPostRoutesDirectory)
-
-        //
-        // Rule 3: If a .get or a .post directory exists, attempt to load the dotJS routes from there.
-        // ===========================================================================================
-        //
-
-        if (httpsGetRoutesDirectoryExists || httpsPostRoutesDirectoryExists) {
-          // Either .get or .post routes directories (or both) exist.
-          this.log('   ⛺    ❨Place❩ Found get/post folders. Will load dynamic routes from there.')
-          if (httpsGetRoutesDirectoryExists) {
-            await loadHttpsGetRoutesFrom(httpsGetRoutesDirectory)
-          }
-          if (httpsPostRoutesDirectoryExists) {
-            // Load HTTPS POST routes.
-
-            addBodyParser()
-
-            const httpsPostRoutes = getRoutes(httpsPostRoutesDirectory)
-
-            asyncForEach(httpsPostRoutes, async route => {
-              this.log(`   ⛺    ❨Place❩ Adding HTTPS POST route: ${route.path}`)
-              this.app.post(route.path, (await import(route.callback)).default)
-            })
-          }
-          return
-        }
-
-        //
-        // Rule 4: If all else fails, try to load dotJS GET routes.
-        // ========================================================
-        //
-
-        await loadHttpsGetRoutesFrom(httpsRoutesDirectory)
-      }
-
-      //
-      // Rule 1: Check if a routes.js file exists. If it does, we just need to load that in.
-      // ===================================================================================
-      //
-
-      const routesJsFile = path.join(dynamicRoutesDirectory, 'routes.js')
-
-      if (fs.existsSync(routesJsFile)) {
-        this.log('   ⛺    ❨Place❩ Found routes.js file, will load dynamic routes from there.')
-        // We flag that this needs to be done here and actually require the file
-        // once the server has been created so that WebSocket routes can be added also.
-        this.routesJsFile = routesJsFile
-
-        // Add POST handling in case there are POST routes defined.
-        addBodyParser()
-        return
-      }
-
-      //
-      // Rule 2: Check if .https and/or .wss folders exist. If they do, load the routes from there.
-      // ==========================================================================================
-      //
-
-      const httpsRoutesDirectory = path.join(dynamicRoutesDirectory, 'https')
-      const wssRoutesDirectory = path.join(dynamicRoutesDirectory, 'wss')
-      const httpsRoutesDirectoryExists = fs.existsSync(httpsRoutesDirectory)
-      const wssRoutesDirectoryExists = fs.existsSync(wssRoutesDirectory)
-
-      if (httpsRoutesDirectoryExists || wssRoutesDirectoryExists) {
-        // Either .https or .wss routes directories (or both) exist.
-        this.log('   ⛺    ❨Place❩ Found https/wss folders. Will load dynamic routes from there.')
-        if (httpsRoutesDirectoryExists) {
-          await loadHttpsRoutesFrom(httpsRoutesDirectory)
-        }
-        if (wssRoutesDirectoryExists) {
-          // Load WebSocket (WSS) routes.
-          //
-          // Note: we are not adding them to the app here because Express-WS requires a
-          // ===== reference to the server instance that we create manually (in order to
-          //       add its HTTP upgrade handling. Since we don’t have the server instance
-          //       yet, we delay adding the routes until the server is created).
-          this.wssRoutes = getRoutes(wssRoutesDirectory)
-        }
-        return
-      }
-
-      // Fallback behaviour: routes.js file doesn’t exist and we don’t have
-      // separate folders for .https and .wss routes. Attempt to load HTTPS
-      // routes from the dynamic routes directory, while applying rules 3 & 4.
-      await loadHttpsRoutesFrom(dynamicRoutesDirectory)
-    }
   }
 }
 
