@@ -43,6 +43,7 @@ import createWebSocketServer from './lib/create-websocket-server.js'
 import allowAllCors from './middleware/allow-all-cors.js'
 import logging from './middleware/logging.js'
 import responseObjectHtmlMethodMixin from './middleware/response-object-html-method-mixin.js'
+import domainAliasRedirects from './middleware/domain-alias-redirects.js'
 import gitServer from './middleware/git-server.js'
 import error404 from './middleware/error-404.js'
 import error500 from './middleware/error-500.js'
@@ -297,20 +298,9 @@ class Place {
     // Logging.
     this.app.use(logging(this.accessLogDisable, this.accessLogErrorsOnly))
 
-    // Add domain aliases support (add 302 redirects for any domains
-    // defined as aliases so that the URL is rewritten). There is always
-    // at least one alias (the www. subdomain) for global servers.
+    // Redirects aliases to main domain.
     if (this.global) {
-      const mainHostname = Place.hostname
-      this.app.use((request, response, next) => {
-        const requestedHost = request.header('host')
-        if (requestedHost === mainHostname) {
-          next()
-        } else {
-          this.log(`   👉    ❨Place❩ Redirecting alias ${requestedHost} to main hostname ${mainHostname}.`)
-          response.redirect(`https://${mainHostname}${request.path}`)
-        }
-      })
+      this.app.use(domainAliasRedirects(Place.hostname))
     }
 
     // Mix in html() helper method to response objects.
