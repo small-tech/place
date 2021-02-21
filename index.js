@@ -423,9 +423,7 @@ class Place {
     // Create the file watcher to watch for changes on dynamic routes.
     this.createFileWatcher()
 
-    //
-    // Add web socket routes.
-    //
+    // Create WebSocket server, add WebSocket routes, and integrate with Express app.
     const wssRoutesDirectory = path.join(__dirname, 'routes', 'wss')
     await createWebSocketServer(this.app, this.server, wssRoutesDirectory)
 
