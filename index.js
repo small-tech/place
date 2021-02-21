@@ -42,6 +42,7 @@ import createWebSocketServer from './lib/create-websocket-server.js'
 // Middleware
 import allowAllCors from './middleware/allow-all-cors.js'
 import logging from './middleware/logging.js'
+import responseObjectHtmlMethodMixin from './middleware/response-object-html-method-mixin.js'
 import gitServer from './middleware/git-server.js'
 import error404 from './middleware/error-404.js'
 import error500 from './middleware/error-500.js'
@@ -312,20 +313,8 @@ class Place {
       })
     }
 
-    // Inject an html() method into the response object as a handy utility
-    // for both setting the type of the response to HTML and ending it with
-    // the passed content. Let’s save some keystrokes. Over time, they can
-    // add up to whole lifetimes.
-    this.app.use((request, response, next) => {
-      (() => {
-        const self = response
-        response.html = content => {
-          self.type('html')
-          self.end(content)
-        }
-      })()
-      next()
-    })
+    // Mix in html() helper method to response objects.
+    this.app.use(responseObjectHtmlMethodMixin)
 
     // Statistics view (displays anonymous, ephemeral statistics)
     this.app.get(this.stats.route, this.stats.view)
