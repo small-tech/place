@@ -476,8 +476,7 @@ class Place {
     initialiseDatabase(databasePath)
 
     // Before starting the server, we have to configure the app. We do this here
-    // instead of in the constructor since the process might have to wait for a
-    // build process to complete.
+    // instead of in the constructor since the process is asynchronous.
     await this.configureApp()
 
     if (typeof callback !== 'function') {
@@ -591,11 +590,6 @@ class Place {
       // Do some housekeeping.
       Graceful.off('SIGINT', this.goodbye)
       Graceful.off('SIGTERM', this.goodbye)
-
-      // if (this.hugoServerProcesses) {
-      //   this.log('   🚮    ❨Place❩ Killing Hugo server processes.')
-      //   this.hugoServerProcesses.forEach(hugoServerProcess => hugoServerProcess.kill())
-      // }
 
       // Wait until housekeeping is done cleaning up after the server is destroyed before
       // restarting the server.
