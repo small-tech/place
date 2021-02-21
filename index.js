@@ -27,7 +27,6 @@ import chalk from 'chalk'
 
 import https from '@small-tech/https'
 import crossPlatformHostname from '@small-tech/cross-platform-hostname'
-import JSDB from '@small-tech/jsdb'
 
 import clr from './lib/clr.js'
 import cli from './bin/lib/cli.js'
@@ -38,6 +37,7 @@ import Util from './lib/Util.js'
 import ensureDomainsAreReachable from './lib/ensure-domains-are-reachable.js'
 import addHttpsGetRoutes from './lib/add-https-get-routes.js'
 import createWebSocketServer from './lib/create-websocket-server.js'
+import initialiseDatabase from './lib/initialise-database.js'
 
 // Middleware
 import allowAllCors from './middleware/allow-all-cors.js'
@@ -210,8 +210,6 @@ class Place {
     this.absolutePathToServe = this.pathToServe
 
     this.placePath = options.placePath
-
-    this.databasePath = path.join(this.placePath, 'database')
 
     // TODO: These will always be decided now. Refactor.
     this.port = typeof options.port === 'number' ? options.port : 443
@@ -473,36 +471,9 @@ class Place {
       }
     }
 
-    // If a JavaScript Database (JSDB) database exists for the current app, load it in right now (since this is a
-    // relatively slow process, we want it to happen at server start, not while the server is up and running and during
-    // a request.). If a database doesn’t already exist, we don’t want to pollute the project directory with a database
-    // directory unnecessarily so we  create a global property accessor to instantiates a database instance on first
-    // attempt to access it.
-    if (fs.existsSync(this.databasePath)) {
-      // We still create the _db property so we can use that to check if a database exist during graceful shutdown
-      // instead of possibly accessing the accessor defined in the other branch of this conditional, thereby
-      // triggering it to be created when all we want to do is perform housekeeping.
-      this.log('   💾    ❨Place❩ Opening database.')
-      globalThis._db = JSDB.open(this.databasePath)
-      globalThis.db = globalThis._db
-      this.log('   💾    ❨Place❩ Database ready.')
-    } else {
-      // We check for existence first as the property will already exist if this is a server restart.
-      if (!globalThis.db) {
-        Object.defineProperty(globalThis, 'db', {
-          get: (function () {
-            if (!globalThis._db) {
-              this.log('   💾    ❨Place❩ Lazily creating database.')
-              globalThis._db = JSDB.open(this.databasePath)
-              this.log('   💾    ❨Place❩ Database ready.')
-            }
-            return globalThis._db
-          }).bind(this),
-          set: (function (value) { if (value !== globalThis.db) { globalThis.db = value} }).bind(this),
-          configurable: true
-        })
-      }
-    }
+    // Initialise the global database (reachable at global reference db).
+    const databasePath = path.join(this.placePath, 'database')
+    initialiseDatabase(databasePath)
 
     // Before starting the server, we have to configure the app. We do this here
     // instead of in the constructor since the process might have to wait for a
