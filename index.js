@@ -246,13 +246,6 @@ class Place {
 
     // Read in public keys.
     const placeKeysPath = path.join(this.placePath, 'public-keys.json')
-
-    // This should never happen.
-    if (!fs.existsSync(placeKeysPath)) {
-      this.log(`\n   ❌    ${clr('❨Place❩ Error:', 'red')} Place keys file does not exist at ${placeKeysPath}. Have you created the place?\n`)
-      process.exit(1)
-    }
-
     Place.publicKeys = JSON.parse(fs.readFileSync(placeKeysPath, 'utf-8'))
 
     //
