@@ -111,19 +111,15 @@ class Place {
     const darkGreen = chalk.rgb(0, 98, 91)
 
     return [
-      chalk.hsl(329,100,90)(`${prefix}██████  ██       █████   ██████ ███████ `) + midGreen('      ███') + lightGreen('██████\n'),
-      chalk.hsl(329,100,80)(`${prefix}██   ██ ██      ██   ██ ██      ██     `) + midGreen('      ██') + darkGreen('█') + midGreen('██') + lightGreen('██████\n'),
-      chalk.hsl(329,100,70)(`${prefix}██████  ██      ███████ ██      █████  `) + midGreen('     ██') + darkGreen('███') + midGreen('██') + lightGreen('██████\n'),
-      chalk.hsl(329,100,60)(`${prefix}██      ██      ██   ██ ██      ██     `) + midGreen('    ██') + darkGreen('█████') + midGreen('██') + lightGreen('██████\n'),
-      chalk.hsl(329,100,50)(`${prefix}██      ███████ ██   ██  ██████ ███████`) + midGreen('   ██') + darkGreen('███████') + midGreen('██') + lightGreen('██████\n'),
+      chalk.hsl(329,100,90)(`${prefix}██████  ██       █████   ██████ ███████ \n`),
+      chalk.hsl(329,100,80)(`${prefix}██   ██ ██      ██   ██ ██      ██     \n`),
+      chalk.hsl(329,100,70)(`${prefix}██████  ██      ███████ ██      █████  \n`),
+      chalk.hsl(329,100,60)(`${prefix}██      ██      ██   ██ ██      ██     \n`),
+      chalk.hsl(329,100,50)(`${prefix}██      ███████ ██   ██  ██████ ███████\n`),
       '\n',
-      chalk.red('  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n'),
-      chalk.red('  ┃                            WARNING                           ┃\n'),
-      chalk.red('  ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫\n'),
-      chalk.red('  ┃ Place is pre-release and rapidly evolving. Things may be un- ┃\n'),
-      chalk.red('  ┃ implemented, incomplete or broken. Please feel free to play  ┃\n'),
-      chalk.red('  ┃ but we’re not currently looking for contributions or issues. ┃\n'),
-      chalk.red('  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n'),
+      chalk.hsl(329,100,90)(`${prefix}The Small Web Reference Protocol Server\n`),
+      '\n',
+      '   ' + chalk.bgRed(' WARNING: pre-release. Likely broken. Use at your own risk. \n'),
       '\n',
     ]
   }
@@ -137,10 +133,6 @@ class Place {
   // This is the directory that settings and other persistent data is stored for Place.
   static get settingsDirectory () { return path.join(Util.unprivilegedHomeDirectory(), '.small-tech.org', 'place') }
 
-  // Logs a nicely-formatted version string based on
-  // the version set in the package.json file to console.
-  // (Only once per Site lifetime.)
-  // (Synchronous.)
   static logAppNameAndVersion (compact = false) {
 
     if (process.env.QUIET) {
@@ -153,16 +145,14 @@ class Place {
       this.generateManifest()
 
       let message = this.logo(prefix).concat([
-        `${prefix}Version ${clr(`${this.packageVersion}-${this.sourceVersion}-${this.platform}/${this.architecture}`, 'green')}\n`,
+        `${prefix}Version ${clr(`${this.packageVersion}-${this.sourceVersion} (${this.platform}/${this.architecture})`, 'green')}\n`,
         `${prefix}Node.js ${clr(`${process.version.replace('v', '')}`, 'green')}\n`,
         `${prefix}Source  ${clr(`https://source.small-tech.org/place/app/-/tree/${this.sourceVersion}`, 'cyan')}\n\n`,
         `${prefix}Like this? Fund Us! https://small-tech.org/fund-us \n`,
       ])
 
       message = message.join('')
-
       console.log(message)
-
       Place.#appNameAndVersionAlreadyLogged = true
     }
   }
@@ -334,7 +324,7 @@ class Place {
   }
 
   // Create the server. Use this first to create the server and add the routes later
-  // so that you can support asynchronous tasks (e.g., like content generation).
+  // so that we can support asynchronous tasks during app configuration.
   createServer () {
     // Check for a valid port range
     // (port above 49,151 are ephemeral ports. See https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Dynamic,_private_or_ephemeral_ports)
@@ -374,11 +364,6 @@ class Place {
       this.eventEmitter.emit('housekeepingIsDone')
     })
   }
-
-  // Finish configuring the app. These are the routes that come at the end.
-  // (We need to add the WebSocket (WSS) routes after the server has been created).
-  async endAppConfiguration () {
-   }
 
 
   initialiseStatistics () {
@@ -452,7 +437,7 @@ class Place {
     initialiseDatabase(databasePath)
 
     // Before starting the server, we have to configure the app. We do this here
-    // instead of in the constructor since the process is asynchronous.
+    // instead of earlier in the constructor since the process is asynchronous.
     await this.configureApp()
 
     // Create the file watcher to watch for changes on dynamic routes.
