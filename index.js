@@ -224,6 +224,22 @@ class Place {
     // TODO: Refactor.
     Place.pathToServe = this.pathToServe
 
+    // Ensure we can serve the requested path and exit early if not.
+    let statusOfPathToServe
+    try {
+      statusOfPathToServe = fs.statSync(this.absolutePathToServe)
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        throw new errors.InvalidPathToServeError(`Path ${clr(this.pathToServe, 'yellow')} does not exist.`)
+      } else {
+        throw new errors.InvalidPathToServeError('Unexpected file system error', error)
+      }
+    }
+
+    if (statusOfPathToServe.isFile()) {
+      throw new errors.InvalidPathToServeError(`${clr(this.pathToServe, 'yellow')} is a file. Place can only serve directories.`)
+    }
+
     if (this.skipDomainReachabilityCheck) {
       this.log(`   ⚠     ${clr('❨Place❩ Domain reachability pre-flight check is disabled.', 'yellow')}`)
     }
@@ -269,14 +285,7 @@ class Place {
   // The app configuration is handled in an asynchronous method
   // as there is a chance that we will have to wait for generated content.
   async configureApp () {
-    this.startAppConfiguration()
-    await this.configureAppRoutes()
-    await this.endAppConfiguration()
-  }
 
-
-  // Middleware that go at the start of the app configuration.
-  startAppConfiguration() {
     // Express.js security with HTTP headers.
     this.app.use(helmet())
 
@@ -299,26 +308,6 @@ class Place {
 
     // Statistics view (displays anonymous, ephemeral statistics)
     this.app.get(this.stats.route, this.stats.view)
-  }
-
-  // Middleware and routes that might (in the future) include an async generation step.
-  // TODO: Refactor accordingly if we don’t end up using this.
-  async configureAppRoutes () {
-
-    let statusOfPathToServe
-    try {
-      statusOfPathToServe = fs.statSync(this.absolutePathToServe)
-    } catch (error) {
-      if (error.code === 'ENOENT') {
-        throw new errors.InvalidPathToServeError(`Path ${clr(this.pathToServe, 'yellow')} does not exist.`)
-      } else {
-        throw new errors.InvalidPathToServeError('Unexpected file system error', error)
-      }
-    }
-
-    if (statusOfPathToServe.isFile()) {
-      throw new errors.InvalidPathToServeError(`${clr(this.pathToServe, 'yellow')} is a file. Place can only serve directories.`)
-    }
 
     // Add HTTPS GET routes.
     const httpsGetRoutesDirectory = path.join(__dirname, 'routes', 'https')
@@ -327,20 +316,21 @@ class Place {
     // Middleware: static routes.
     this.app.use(express.static(this.pathToServe))
 
-    // Continue configuring the rest of the app routes.
-
-    // Middleware: To test a 500 error, hit /test-500-error
-    this.app.use((request, response, next) => {
-      if (request.path === '/test-500-error') {
-        throw new Error('Bad things have happened.')
-      } else {
-        next()
-      }
-    })
-
     // Middleware: git server.
     this.app.use(gitServer(this.placePath))
     this.log(`   🗄️     ❨Place❩ Serving source code repositories at /source/…`)
+
+    // Create WebSocket server, add WebSocket routes, and integrate with Express app.
+    const wssRoutesDirectory = path.join(__dirname, 'routes', 'wss')
+    await createWebSocketServer(this.app, this.server, wssRoutesDirectory)
+
+    // Note: ensure error roots remain added last.
+
+    // 404 (Not Found) support.
+    this.app.use(error404(this.pathToServe))
+
+    // 500 (Server error) support.
+    this.app.use(error500(this.pathToServe))
   }
 
   // Create the server. Use this first to create the server and add the routes later
@@ -388,21 +378,7 @@ class Place {
   // Finish configuring the app. These are the routes that come at the end.
   // (We need to add the WebSocket (WSS) routes after the server has been created).
   async endAppConfiguration () {
-    // Create the file watcher to watch for changes on dynamic routes.
-    this.createFileWatcher()
-
-    // Create WebSocket server, add WebSocket routes, and integrate with Express app.
-    const wssRoutesDirectory = path.join(__dirname, 'routes', 'wss')
-    await createWebSocketServer(this.app, this.server, wssRoutesDirectory)
-
-    // Note: ensure error roots remain added last.
-
-    // 404 (Not Found) support.
-    this.app.use(error404(this.pathToServe))
-
-    // 500 (Server error) support.
-    this.app.use(error500(this.pathToServe))
-  }
+   }
 
 
   initialiseStatistics () {
@@ -478,6 +454,9 @@ class Place {
     // Before starting the server, we have to configure the app. We do this here
     // instead of in the constructor since the process is asynchronous.
     await this.configureApp()
+
+    // Create the file watcher to watch for changes on dynamic routes.
+    this.createFileWatcher()
 
     if (typeof callback !== 'function') {
       callback = this.defaultCallback
