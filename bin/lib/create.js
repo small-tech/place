@@ -18,7 +18,7 @@ import os from 'os'
 import fs from 'fs-extra'
 import path from 'path'
 import chalk from 'chalk'
-import generateEFFDicewarePassphrase from 'eff-diceware-passphrase'
+import EFFDicewarePassphrase from '@small-tech/eff-diceware-passphrase'
 import session25519 from 'session25519'
 import crypto from 'crypto'
 
@@ -48,6 +48,7 @@ async function create (domain, client, placePath, clientPath) {
 
   console.log(` ℹ️  Your Small Web place will be created at ${chalk.green(placePath)}\n`)
 
+  const generateEFFDicewarePassphrase = new EFFDicewarePassphrase(crypto)
   let passphrase
   let passphraseConfirmation
 
@@ -55,6 +56,7 @@ async function create (domain, client, placePath, clientPath) {
   console.log(chalk.yellow(chalk.italic('    (e.g., in a secure password manager like 1password, etc.)')))
 
   do {
+
     passphrase = generateEFFDicewarePassphrase.entropy(100).join (' ')
 
     const line = '━'.repeat(passphrase.length+2)
