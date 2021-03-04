@@ -35,7 +35,7 @@
     "@small-tech/eff-diceware-passphrase": "file:../../../eff-diceware-passphrase",
     "@small-tech/express-ws": "^1.0.0",
     "@small-tech/https": "^2.1.1",
-    "@small-tech/jsdb": "file:../../../jsdb",
+    "@small-tech/jsdb": "^2.0.1",
     "@small-tech/web-routes-from-files": "^3.0.1",
     "ansi-escape-sequences": "^4.1.0",
     "bent": "^7.3.4",
