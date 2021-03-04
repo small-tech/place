@@ -32,7 +32,7 @@
   "license": "AGPL-3.0-or-later",
   "dependencies": {
     "@small-tech/cross-platform-hostname": "^1.0.0",
-    "@small-tech/eff-diceware-passphrase": "file:../../../eff-diceware-passphrase",
+    "@small-tech/eff-diceware-passphrase": "^1.0.1",
     "@small-tech/express-ws": "^1.0.0",
     "@small-tech/https": "^2.1.1",
     "@small-tech/jsdb": "^2.0.1",
