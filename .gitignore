@@ -6,3 +6,4 @@ snowpack.crt
 snowpack.key
 build
 dist
+place.js
