@@ -1,7 +1,6 @@
-import Place from '../../index.js'
+import { getPublicKeys } from '../../lib/public-keys.js'
 
 import nacl from 'tweetnacl'
-import naclUtil from 'tweetnacl-util'
 import sealedBox from 'tweetnacl-sealedbox-js'
 
 // Check every minute and prune sign-in paths that haven’t been used in the last ten seconds.
@@ -18,12 +17,9 @@ setInterval(() => {
   console.log('After prune', db.privateRoutes)
 }, 1 /* minute */ * 60 * 1000)
 
-
-// const publicEncryptionKey = new X25519PublicKey(Buffer.from(Place.publicKeys.encryption, 'hex'))
-
-const publicEncryptionKey = Buffer.from(Place.publicKeys.encryption, 'hex')
-
 export default (request, response) => {
+  const publicEncryptionKey = Buffer.from(getPublicKeys().encryption, 'hex')
+
   // Generate a new private path fragment. This is the
   // hexadecimal representation of a 32-byte random buffer.
   const randomBytes = nacl.randomBytes(32)

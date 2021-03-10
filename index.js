@@ -26,6 +26,7 @@ import chokidar from 'chokidar'
 import chalk from 'chalk'
 
 import https from '@small-tech/https'
+import expressWebSocket from '@small-tech/express-ws'
 import crossPlatformHostname from '@small-tech/cross-platform-hostname'
 
 import clr from './lib/clr.js'
@@ -35,8 +36,6 @@ import errors from './lib/errors.js'
 import Util from './lib/Util.js'
 
 import ensureDomainsAreReachable from './lib/ensure-domains-are-reachable.js'
-import addHttpsGetRoutes from './lib/add-https-get-routes.js'
-import createWebSocketServer from './lib/create-websocket-server.js'
 import initialiseDatabase from './lib/initialise-database.js'
 
 // Middleware
@@ -47,6 +46,12 @@ import domainAliasRedirects from './middleware/domain-alias-redirects.js'
 import gitServer from './middleware/git-server.js'
 import error404 from './middleware/error-404.js'
 import error500 from './middleware/error-500.js'
+
+// Routes
+import { httpsRoutes } from './routes/https/index.js'
+import { wssRoutes } from './routes/wss/index.js'
+
+import { setPublicKeys } from './lib/public-keys.js'
 
 // For compatibility with legacy CommonJS code.
 import { createRequire } from 'module'
@@ -225,6 +230,10 @@ class Place {
     const placeKeysPath = path.join(this.placePath, 'public-keys.json')
     Place.publicKeys = JSON.parse(fs.readFileSync(placeKeysPath, 'utf-8'))
 
+    // Make it available for other modules to
+    setPublicKeys(Place.publicKeys)
+
+
     //
     // Create the Express app. We will configure it later.
     //
@@ -247,7 +256,7 @@ class Place {
 
   // The app configuration is handled in an asynchronous method
   // as there is a chance that we will have to wait for generated content.
-  async configureApp () {
+  configureApp () {
 
     // Express.js security with HTTP headers.
     this.app.use(helmet())
@@ -273,8 +282,9 @@ class Place {
     this.app.get(this.stats.route, this.stats.view)
 
     // Add HTTPS GET routes.
-    const httpsGetRoutesDirectory = path.join(__dirname, 'routes', 'https')
-    await addHttpsGetRoutes(httpsGetRoutesDirectory, this.app)
+    Object.keys(httpsRoutes).forEach(routePath => {
+      this.app.get(routePath, httpsRoutes[routePath])
+    })
 
     // Middleware: static routes.
     this.app.use(express.static(this.pathToServe))
@@ -284,10 +294,12 @@ class Place {
     this.log(`   🗄️     ❨Place❩ Serving source code repositories at /source/…`)
 
     // Create WebSocket server, add WebSocket routes, and integrate with Express app.
-    const wssRoutesDirectory = path.join(__dirname, 'routes', 'wss')
-    await createWebSocketServer(this.app, this.server, wssRoutesDirectory)
+    expressWebSocket(this.app, this.server, { perMessageDeflate: false })
+    Object.keys(wssRoutes).forEach(routePath => {
+      this.app.ws(routePath, wssRoutes[routePath])
+    })
 
-    // Note: ensure error roots remain added last.
+    // Note: please ensure that error roots remain added last.
 
     // 404 (Not Found) support.
     this.app.use(error404(this.pathToServe))
@@ -411,7 +423,7 @@ class Place {
 
     // Before starting the server, we have to configure the app. We do this here
     // instead of earlier in the constructor since the process is asynchronous.
-    await this.configureApp()
+    this.configureApp()
 
     // Create the file watcher to watch for changes on dynamic routes.
     this.createFileWatcher()
