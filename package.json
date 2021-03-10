@@ -14,7 +14,8 @@
   "bin": "bin/place.js",
   "scripts": {
     "test": "tape test/*.js | tap-spec",
-    "coverage": "nyc tape test/*.js | tap-nyc"
+    "coverage": "nyc tape test/*.js | tap-nyc",
+    "build": "esbuild index.js --bundle --platform=node --outfile=dist/place.js"
   },
   "funding": {
     "type": "foundation",
@@ -34,7 +35,7 @@
     "@small-tech/cross-platform-hostname": "^1.0.0",
     "@small-tech/eff-diceware-passphrase": "^1.0.1",
     "@small-tech/express-ws": "^1.0.0",
-    "@small-tech/https": "^2.1.1",
+    "@small-tech/https": "^3.0.0",
     "@small-tech/jsdb": "^2.0.1",
     "@small-tech/web-routes-from-files": "^3.0.1",
     "ansi-escape-sequences": "^4.1.0",
