@@ -59,7 +59,7 @@ class Place {
   // Class.
   //
 
-  static #appNameAndVersionAlreadyLogged = false
+  static appNameAndVersionAlreadyLogged = false
 
   static logo (prefix = ' ') {
 
@@ -107,7 +107,7 @@ class Place {
 
   static logAppNameAndVersion () {
 
-    if (process.env.QUIET || Place.#appNameAndVersionAlreadyLogged || process.argv.includes('--dont-log-app-name-and-version')) {
+    if (process.env.QUIET || Place.appNameAndVersionAlreadyLogged || process.argv.includes('--dont-log-app-name-and-version')) {
       return
     }
 
@@ -127,7 +127,7 @@ class Place {
 
     message = message.join('')
     console.log(message)
-    Place.#appNameAndVersionAlreadyLogged = true
+    Place.appNameAndVersionAlreadyLogged = true
 }
 
   //

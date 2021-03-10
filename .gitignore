@@ -5,3 +5,4 @@ node_modules
 snowpack.crt
 snowpack.key
 build
+dist

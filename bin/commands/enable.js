@@ -23,7 +23,7 @@ import childProcess from 'child_process'
 
 import tcpPortUsed from 'tcp-port-used'
 
-import runtime from '../lib/runtime.js'
+import * as runtime from '../lib/runtime.js'
 import ensure from '../lib/ensure.js'
 import clr from '../../lib/clr.js'
 
