@@ -15,7 +15,9 @@
   "scripts": {
     "test": "tape test/*.js | tap-spec",
     "coverage": "nyc tape test/*.js | tap-nyc",
-    "build": "esbuild bin/place.js --bundle --platform=node --external:fsevents --format=esm --outfile=place.js"
+    "build": "npm run esbuild && npm run patch-build",
+    "patch-build": "node bin/patch-build.js",
+    "esbuild": "esbuild bin/place.js --bundle --platform=node --external:fsevents --format=esm --outfile=place.js"
   },
   "funding": {
     "type": "foundation",
