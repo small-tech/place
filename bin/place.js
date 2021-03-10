@@ -22,12 +22,8 @@ const commands = {
   disable, enable, help, logs, restart, serve, start, status, stop, uninstall, version
 }
 
-console.log(commands)
-
 try {
   const {commandName, args} = cli.initialise(process.argv.slice(2))
-
-  console.log(commandName, args)
   commands[commandName](args)
 } catch (error) {
   console.log(error)
