@@ -61,10 +61,7 @@ class CommandLineInterface {
     delete options._
     const commandNamedArguments = options
 
-    // Note that this is included from bin/place and the path is relative to that script.
-    const commandPath = `./commands/${commandName}.js`
-
-    return {commandPath, args: {
+    return {commandName, args: {
       positional: commandPositionalArguments,
       named: commandNamedArguments
     }}

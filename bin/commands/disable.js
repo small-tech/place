@@ -12,7 +12,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-import _disable from '../lib/disable'
+import _disable from '../lib/disable.js'
 import ensure from '../lib/ensure.js'
 import Place from '../../index.js'
 

@@ -12,7 +12,6 @@
 
 const argv0 = process.argv0
 
-const isNode = argv0.endsWith('node') || argv0.endsWith('node.exe')
-const isBinary = argv0.endsWith('place') || argv0.endsWith('place.exe')
+export const isNode = argv0.endsWith('node') || argv0.endsWith('node.exe')
+export const isBinary = argv0.endsWith('place') || argv0.endsWith('place.exe')
 
-export { isNode, isBinary }
