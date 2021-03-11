@@ -92,6 +92,9 @@ class Place {
   static set hostname (domain) { this._hostname = domain }
 
   // This is the directory that settings and other persistent data is stored for Place.
+  // (If you’re running Place locally, the settings for Auto Encrypt Localhost will be in their
+  // own folder at ~/.small-tech.org/auto-encrypt-localhost and shared with any other apps that
+  // might be running Auto Encrypt Localhost on your development machine.)
   static get settingsDirectory () { return path.join(Util.unprivilegedHomeDirectory(), '.small-tech.org', 'place') }
 
   static sourceVersion () {
