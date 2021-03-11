@@ -1,5 +1,6 @@
 export default function (socket, request) {
-  console.log('Private socket connection request. Token = ', request.params.token)
+  const tokenShort = request.params.token.slice(0,8)
+  console.log(`   🔐️    ❨Place❩ Private socket connection request with token ${tokenShort}`)
 
   if (!db.privateRoutes) {
     db.privateRoutes = []
@@ -14,10 +15,11 @@ export default function (socket, request) {
   })
 
   if (!authorised) {
+    console.log(`   ⛔️    ❨Place❩ Unauthorised: token ${tokenShort}`)
     socket.close()
   } else {
     // TODO: add client to room, etc., etc.
-    console.log('Sending private message')
+    console.log(`   🔓️    ❨Place❩ Authorised: token ${tokenShort}`)
     socket.send('Hello from the server :) Welcome to the private area! Oooh!!!!')
   }
 }

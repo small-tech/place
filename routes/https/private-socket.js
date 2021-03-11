@@ -9,12 +9,11 @@ setInterval(() => {
   if (db.privateRoutes) {
     db.privateRoutes.forEach((privateRoute, index) => {
       if (privateRoute.createdAt === privateRoute.accessedAt && (now - privateRoute.createdAt > 10000)) {
-        console.log('Pruning unused private path', privateRoute)
+        // console.log('Pruning unused private path', privateRoute)
         db.privateRoutes.splice(index, 1)
       }
     })
   }
-  console.log('After prune', db.privateRoutes)
 }, 1 /* minute */ * 60 * 1000)
 
 export default (request, response) => {
@@ -25,7 +24,7 @@ export default (request, response) => {
   const randomBytes = nacl.randomBytes(32)
   const unecryptedPrivateSocketPathFragment = toHex(randomBytes)
 
-  console.log('Unencrypted secret path', unecryptedPrivateSocketPathFragment)
+  // console.log('Unencrypted secret path', unecryptedPrivateSocketPathFragment)
 
   // Add the unencrypted secret path, along with the current time, to the routes
   // so we can listen for requests on it.
@@ -34,14 +33,14 @@ export default (request, response) => {
   }
   db.privateRoutes.push({ createdAt: Date.now(), accessedAt: Date.now(), route: unecryptedPrivateSocketPathFragment })
 
-  console.log('Private routes', db.privateRoutes)
+  // console.log('Private routes', db.privateRoutes)
 
   // Next, we encrypt it using the person’s public encryption key.
   // Since this is over a TLS connection, we don’t need to prove our
   // identity so a sealed box will suffice.
   const encryptedPrivateSocketPathFragment = toHex(sealedBox.seal(Buffer.from(unecryptedPrivateSocketPathFragment), publicEncryptionKey))
 
-  console.log('Encrypted secret path', encryptedPrivateSocketPathFragment)
+  // console.log('Encrypted secret path', encryptedPrivateSocketPathFragment)
 
   response.json({
     encryptedPrivateSocketPathFragment
