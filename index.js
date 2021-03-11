@@ -424,6 +424,7 @@ class Place {
     const databasePath = path.join(this.placePath, 'database')
     initialiseDatabase(databasePath)
 
+    // TODO: It’s no longer async. Refactor.
     // Before starting the server, we have to configure the app. We do this here
     // instead of earlier in the constructor since the process is asynchronous.
     this.configureApp()
