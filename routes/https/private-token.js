@@ -44,10 +44,10 @@ export default (request, response) => {
 // (This means the validity of a private token is between 10-60 seconds.)
 setInterval(() => {
   const now = Date.now()
-  try { db.privateTokens } catch (error) { return }
+  try { db } catch (error) { return } // In case global db hasn’t been created yet.
+  if (!db.privateTokens) { return }   // In case privateTokens table hasn’t been created yet.
   db.privateTokens.forEach((privateToken, index) => {
     if (privateToken.createdAt === privateToken.accessedAt && (now - privateToken.createdAt > 10000)) {
-      // console.log('Pruning unused private token:', privateToken)
       db.privateTokens.splice(index, 1)
     }
   })
