@@ -14,15 +14,29 @@
 
 Place is a hard fork of [Site.js](https://sitejs.org).
 
-## Implementation notes / todos
+## Implementation notes / to-dos
 
   - Refactored to use ECMAScript Modules (esm) (Tue, Jan 26, 2021).
   - Due to move to esm will require Node 14.x+
-  - Will no longer be shipped as a single binary (but the experience of installing it will remain the same). This will free us from our dependence on Nexe and will mean we can easily adopt and support the latest Node.js LTS. Binary builds and related functionality will be removed. Run `node bin/place.js <path to your small web client>` to test.
+  - No longer a single binary but a single JS file built using esbuild.
+  - Now uses nodemon as a library during dev process to restart the server (instead of chokidar and custom restart logic that didn’t restart the process).
+
+## Working with the development version
+
+To run the development version, simply run the `dev.js` script using Node.
+
+If you want to use the `place <domain>` syntax to launch your server, for the time being, create a script that does this (e.g., place the following in your `/usr/local/bin` folder, substituting the path to `dev.js` for your own machine):
+
+```bash
+#!/bin/bash
+pushd /path/to/your/working/copy/of/place/ > /dev/null
+./dev.js
+popd > /dev/null
+```
 
 Note that, unlike the generic behaviour of Site.js, the server routes of Place are hardcoded and only serve the small web protocols. You can create the client for a small web place using any tools you like as long as they output to a static single-page app (SPA) that conforms to the small web protocols.
 
-__Place command-line interface. Drafted Feb 18, 2021. To be implemented:__
+__Place command-line interface. Drafted Feb 18, 2021. Implementation is a work in progress:__
 
 ## Syntax
 
@@ -149,11 +163,11 @@ The following URLs are reserved and have special meaning.
 
   - `/keys`: (GET) your public Ed25519 signing key and X25519 encryption key. Together, these keys form the identity of your small web place.
 
-  - `/hostname`: (GET) returns the production hostname of the small web place being served (i.e., if the server is running on localhost during development but the production hostname is `aral.small-web.org`, the latter is what will be returned. This is used when, for example, (re)generating keys from the passphrase on small web clients as the Blake2b hash of the production hostname is used as the crypographic salt).
+  - `/hostname`: (GET) returns the production hostname of the small web place being served (i.e., if the server is running on localhost during development but the production hostname is `aral.small-web.org`, the latter is what will be returned. This is used when, for example, (re)generating keys from the passphrase on small web clients as the Blake2b hash of the production hostname is used as the cryptographic salt).
 
   - `/private-token`: (GET) returns a private token (“Bernstein token”) – a cryptographically random 32-byte value that is encrypted with the person’s public X25519 encryption key. (TODO: Rename route to private-token in implementation; currently is private-socket).
 
-  - `/private/:token`: (WSS) a secyre web socket route for exchange of private data between server and client. `:token` is a random 32-byte value as returned from the `/private-token` route (the person MUST decrypt the encrypted Bernstein token returned in order to successfully authenticate and connect to the private websocket route within a specified timeout period – currently 60 seconds in the implementation).
+  - `/private/:token`: (WSS) a secure web socket route for exchange of private data between server and client. `:token` is a random 32-byte value as returned from the `/private-token` route (the person MUST decrypt the encrypted Bernstein token returned in order to successfully authenticate and connect to the private websocket route within a specified timeout period – currently 60 seconds in the implementation).
 
 #### Client
 
