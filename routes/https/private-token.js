@@ -1,5 +1,4 @@
 import { getPublicKeys } from '../../lib/public-keys.js'
-
 import nacl from 'tweetnacl'
 import sealedBox from 'tweetnacl-sealedbox-js'
 
@@ -11,15 +10,11 @@ export default (request, response) => {
   const randomBytes = nacl.randomBytes(32)
   const unencryptedPrivateToken = toHex(randomBytes)
 
-  // console.log('Unencrypted private token', unencryptedPrivateToken)
-
-  // Save
+  // Save the private token.
   if (!db.privateTokens) {
     db.privateTokens = []
   }
   db.privateTokens.push({ createdAt: Date.now(), accessedAt: Date.now(), route: unencryptedPrivateToken })
-
-  // console.log('Private tokens', db.privateTokens)
 
   // Encrypt the private token using the person’s public encryption key.
   // Remember that the purpose of this token is for the person to prove who they are so the server
@@ -28,8 +23,6 @@ export default (request, response) => {
   // Since client/server communication takes place over a TLS connection, the server doesn’t need to
   // prove its identity again so a sealed box will suffice.
   const encryptedPrivateToken = toHex(sealedBox.seal(Buffer.from(unencryptedPrivateToken), publicEncryptionKey))
-
-  console.log('Encrypted private token', encryptedPrivateToken)
 
   response.json({
     encryptedPrivateToken
