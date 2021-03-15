@@ -6,14 +6,13 @@ import sealedBox from 'tweetnacl-sealedbox-js'
 // Check every minute and prune sign-in paths that haven’t been used in the last ten seconds.
 setInterval(() => {
   const now = Date.now()
-  if (db.privateRoutes) {
-    db.privateRoutes.forEach((privateRoute, index) => {
-      if (privateRoute.createdAt === privateRoute.accessedAt && (now - privateRoute.createdAt > 10000)) {
-        // console.log('Pruning unused private path', privateRoute)
-        db.privateRoutes.splice(index, 1)
-      }
-    })
-  }
+  try { db.privateRoutes } catch (error) { return }
+  db.privateRoutes.forEach((privateRoute, index) => {
+    if (privateRoute.createdAt === privateRoute.accessedAt && (now - privateRoute.createdAt > 10000)) {
+      // console.log('Pruning unused private path', privateRoute)
+      db.privateRoutes.splice(index, 1)
+    }
+  })
 }, 1 /* minute */ * 60 * 1000)
 
 export default (request, response) => {
