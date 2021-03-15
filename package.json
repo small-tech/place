@@ -68,6 +68,7 @@
   },
   "devDependencies": {
     "esbuild": "^0.8.53",
+    "nodemon": "^2.0.7",
     "nyc": "^15.1.0",
     "tap-nyc": "^1.0.3",
     "tap-spec": "https://github.com/small-tech/tap-spec",

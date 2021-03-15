@@ -429,8 +429,13 @@ class Place {
     // instead of earlier in the constructor since the process is asynchronous.
     this.configureApp()
 
+    // TODO: Now using Nodemon for restarts during development.
+    // Some version of this will need to be implemented for
+    // production use to capture updates but decoupling the dev-time
+    // use-case with the production-time use case should keep the
+    // code simpler than it is in Site.js.
     // Create the file watcher to watch for changes on dynamic routes.
-    this.createFileWatcher()
+    // this.createFileWatcher()
 
     if (typeof callback !== 'function') {
       callback = this.defaultCallback
@@ -527,44 +532,7 @@ class Place {
 
   // Restarts the server.
   async restartServer () {
-    if (process.env.NODE_ENV === 'production') {
-      // We’re running production, to restart the daemon, just exit.
-      // (We let ourselves fall, knowing that systemd will catch us.) ;)
-      process.exit()
-    } else {
-      // We’re running as a regular process. Just restart the server, not the whole process.
-      if (this.restartingRegularProcess) {
-        this.log('   🙈    ❨Place❩ Server restart requested while one is already in process. Ignoring…')
-        return
-      }
-
-      this.restartingRegularProcess = true
-
-      // Do some housekeeping.
-      Graceful.off('SIGINT', this.goodbye)
-      Graceful.off('SIGTERM', this.goodbye)
-
-      // Wait until housekeeping is done cleaning up after the server is destroyed before
-      // restarting the server.
-      this.eventEmitter.on('housekeepingIsDone', async () => {
-        // Restart the server.
-        this.eventEmitter.removeAllListeners()
-        this.log('\n   ⛺    ❨Place❩ Restarting server…\n')
-        const {commandPath, args} = cli.initialise(process.argv.slice(2))
-        const newPlace = new Place(this.options)
-        await newPlace.serve(args)
-        this.log('\n   ⛺    ❨Place❩ Server restarted.\n')
-        this.restartingRegularProcess = false
-        delete this
-      })
-
-      // Destroy the current server (so we do not get a port conflict on restart before
-      // we’ve had a chance to terminate our own process).
-      this.server.destroy(() => {
-        this.log('\n   ⛺    ❨Place❩ Server destroyed.\n')
-        this.server.removeAllListeners()
-      })
-    }
+    process.exit()
   }
 
   // Returns a pretty human-readable string describing the file watcher change reflected in the event.
@@ -589,23 +557,23 @@ class Place {
   //       usage, but let’s keep an eye on this. (Note that if you listen for the 'raw'
   //       event, it gets triggered with a 'rename' when a removed/recreated folder
   //       is affected.) See: https://github.com/paulmillr/chokidar/issues/404#issuecomment-666669336
-  createFileWatcher () {
-    const dynamicRoutesDirectory = path.join(__dirname, 'routes')
-    const fileWatchPath = `${dynamicRoutesDirectory.replace(/\\/g, '/')}/**/*`
+  // createFileWatcher () {
+  //   const dynamicRoutesDirectory = path.join(__dirname, 'routes')
+  //   const fileWatchPath = `${dynamicRoutesDirectory.replace(/\\/g, '/')}/**/*`
 
-    this.app.__fileWatcher = chokidar.watch(fileWatchPath, {
-      persistent: true,
-      ignoreInitial: true
-    })
+  //   this.app.__fileWatcher = chokidar.watch(fileWatchPath, {
+  //     persistent: true,
+  //     ignoreInitial: true
+  //   })
 
-    this.app.__fileWatcher.on ('all', async (event, file) => {
-      this.log(`   🔭    ❨Place❩ Route change: ${clr(`${this.prettyFileWatcherEvent(event)}`, 'green')} (${clr(file, 'cyan')}).`)
-      this.log('\n   🔭    ❨Place❩ Requesting restart…\n')
-      await this.restartServer()
-    })
+  //   this.app.__fileWatcher.on ('all', async (event, file) => {
+  //     this.log(`   🔭    ❨Place❩ Route change: ${clr(`${this.prettyFileWatcherEvent(event)}`, 'green')} (${clr(file, 'cyan')}).`)
+  //     this.log('\n   🔭    ❨Place❩ Requesting restart…\n')
+  //     await this.restartServer()
+  //   })
 
-    this.log('   🔭    ❨Place❩ Watching for changes to dynamic routes.')
-  }
+  //   this.log('   🔭    ❨Place❩ Watching for changes to dynamic routes.')
+  // }
 }
 
 export default Place
