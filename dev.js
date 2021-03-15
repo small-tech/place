@@ -11,7 +11,7 @@ function prettyFilePath (filePath) {
   return filePath.replace(__dirname, '')
 }
 
-nodemon({ script: 'bin/place.js' })
+nodemon(`bin/place.js -- ${process.argv.slice(2).join(' ')}`)
 .on('restart', (changedFiles) => {
   const numberOfChangedFiles = changedFiles.length
   if (numberOfChangedFiles > 0) {
