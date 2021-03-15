@@ -14,7 +14,7 @@ export default (request, response) => {
   if (!db.privateTokens) {
     db.privateTokens = []
   }
-  db.privateTokens.push({ createdAt: Date.now(), accessedAt: Date.now(), route: unencryptedPrivateToken })
+  db.privateTokens.push({ createdAt: Date.now(), accessedAt: Date.now(), body: unencryptedPrivateToken })
 
   // Encrypt the private token using the person’s public encryption key.
   // Remember that the purpose of this token is for the person to prove who they are so the server
@@ -23,6 +23,8 @@ export default (request, response) => {
   // Since client/server communication takes place over a TLS connection, the server doesn’t need to
   // prove its identity again so a sealed box will suffice.
   const encryptedPrivateToken = toHex(sealedBox.seal(Buffer.from(unencryptedPrivateToken), publicEncryptionKey))
+
+  console.log(`   🔑️    ❨Place❩ Created new private token: ${unencryptedPrivateToken.slice(0,8).toLowerCase()}`)
 
   response.json({
     encryptedPrivateToken

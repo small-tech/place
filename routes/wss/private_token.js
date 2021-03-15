@@ -1,21 +1,22 @@
 export default function (socket, request) {
-  const tokenShort = request.params.token.slice(0,8)
+  const tokenShort = request.params.token.slice(0,8).toLowerCase()
   console.log(`   🔐️    ❨Place❩ Private socket connection request with token ${tokenShort}`)
 
-  if (!db.privateRoutes) {
-    db.privateRoutes = []
+  if (!db.privateTokens) {
+    db.privateTokens = []
   }
 
   let authorised = false
-  db.privateRoutes.forEach(route => {
-    if (route.route === request.params.token) {
+  db.privateTokens.forEach(token => {
+    if (token.body === request.params.token) {
       authorised = true
-      route.accessedAt = Date.now()
+      token.accessedAt = Date.now()
     }
   })
 
   if (!authorised) {
     console.log(`   ⛔️    ❨Place❩ Unauthorised: token ${tokenShort}`)
+    socket.send('Error: unauthorised.')
     socket.close()
   } else {
     // TODO: add client to room, etc., etc.
