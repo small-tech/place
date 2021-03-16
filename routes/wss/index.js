@@ -1,5 +1,7 @@
-import privateToken from './private.js'
+import publicEndpoint from './public.js'
+import privateEndpoint from './private.js'
 
 export const wssRoutes = {
-  '/private/:token': privateToken
+  '/public': publicEndpoint,
+  '/private/:token': privateEndpoint
 }
