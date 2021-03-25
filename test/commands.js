@@ -29,7 +29,8 @@ import ensure from '../bin/lib/ensure'
 
 process.env['QUIET'] = true
 
-const __dirname = new URL('.', import.meta.url).pathname
+import { fileURLToPath } from 'url'
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 async function secureGet (url) {
   return new Promise((resolve, reject) => {

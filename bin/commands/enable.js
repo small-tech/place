@@ -31,7 +31,8 @@ import Util from '../../lib/Util.js'
 
 import Place from '../../index.js'
 
-const __dirname = new URL('.', import.meta.url).pathname
+import { fileURLToPath } from 'url'
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 function enable (args) {
   Place.logAppNameAndVersion()

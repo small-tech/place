@@ -5,7 +5,8 @@
 import nodemon from 'nodemon'
 import chalk from 'chalk'
 
-const __dirname = new URL('.', import.meta.url).pathname
+import { fileURLToPath } from 'url'
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 function prettyFilePath (filePath) {
   return filePath.replace(__dirname, '')

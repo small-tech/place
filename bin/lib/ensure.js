@@ -13,7 +13,8 @@ import * as runtime from './runtime.js'
 import getStatus from './status.js'
 import clr from '../../lib/clr.js'
 
-const __dirname = new URL('.', import.meta.url).pathname
+import { fileURLToPath } from 'url'
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 class Ensure {
 

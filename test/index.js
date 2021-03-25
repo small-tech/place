@@ -24,7 +24,8 @@ import WebSocket from 'ws'
 
 process.env['QUIET'] = true
 
-const __dirname = new URL('.', import.meta.url).pathname
+import { fileURLToPath } from 'url'
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 function localhost(path) {
   return `https://localhost${path}`

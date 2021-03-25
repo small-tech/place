@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
-const __dirname = new URL('.', import.meta.url).pathname
+import { fileURLToPath } from 'url'
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 const build = path.join(__dirname, '..', 'place.js')
 const unpatchedBuild = fs.readFileSync(build, 'utf-8')

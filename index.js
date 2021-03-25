@@ -53,7 +53,8 @@ import { setPublicKeys } from './lib/public-keys.js'
 
 // For compatibility with legacy CommonJS code.
 import { createRequire } from 'module'
-const __dirname = new URL('.', import.meta.url).pathname
+import { fileURLToPath } from 'url'
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
 const require = createRequire(import.meta.url)
 
 class Place {
