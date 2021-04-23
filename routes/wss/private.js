@@ -24,7 +24,7 @@ export default function (client, request) {
   } else {
     // TODO: add client to room, etc., etc.
     console.log(`   🔓️    ❨Place❩ Authorised: token ${tokenShort}`)
-    client.send('Hello from the server :) Welcome to the private area! Oooh!!!!')
+    client.send(`${new Date()}: [Place] Client is authorised.`)
     this.broadcast(client, `There’s been a new login from ${request._remoteAddress}`)
   }
 }
